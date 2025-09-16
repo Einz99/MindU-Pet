@@ -1,0 +1,4 @@
+repository "MindU Pet/MindU Pet@18968110164758@cloud"
+  path "/"
+    br "/main"
+    co "/main"
