@@ -121,7 +121,7 @@ TextureImporter:
         width: 414
         height: 896
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -134,143 +134,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: bg2_1
-      rect:
-        serializedVersion: 2
-        x: 414
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f0722ef8f751af04192d9b1d19a19166
-      internalID: -810528792
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: bg2_2
-      rect:
-        serializedVersion: 2
-        x: 828
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2bb1829f531f29547a9e5146657e12cf
-      internalID: 310472274
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: bg2_3
-      rect:
-        serializedVersion: 2
-        x: 1242
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 26bb3766d3fe5a247be7b8ce0ad6ef87
-      internalID: -1300999524
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: bg2_4
-      rect:
-        serializedVersion: 2
-        x: 1656
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 55412e94ba63cae4ab94f196ed590860
-      internalID: 676510774
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: bg2_5
-      rect:
-        serializedVersion: 2
-        x: 2070
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1ad070eb576186749938d96c66c4aaca
-      internalID: 1335467787
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: bg2_6
-      rect:
-        serializedVersion: 2
-        x: 2484
-        y: 0
-        width: 414
-        height: 896
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9d3f77f898d60574bb4371a4b393f21a
-      internalID: 783328576
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: e061362f5f8735144b4d35b3296b3100
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -278,17 +146,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":7.0,"y":1.0},"gridSpriteSize":{"x":414.0,"y":896.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
       bg2_0: -8483731395159641348
-      bg2_1: -810528792
-      bg2_2: 310472274
-      bg2_3: -1300999524
-      bg2_4: 676510774
-      bg2_5: 1335467787
-      bg2_6: 783328576
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
