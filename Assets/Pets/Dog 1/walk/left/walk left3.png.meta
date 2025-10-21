@@ -103,10 +103,10 @@ TextureImporter:
       name: walk left3_0
       rect:
         serializedVersion: 2
-        x: 265
-        y: 16
-        width: 399
-        height: 386
+        x: 261
+        y: 54
+        width: 406
+        height: 311
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

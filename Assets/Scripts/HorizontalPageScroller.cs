@@ -30,6 +30,7 @@ public class HorizontalPageScroller : MonoBehaviour
     public GameObject SoapQuantity;
     public GameObject lightButtonObject; // Reference to the light button GameObject
     public GameObject FoodQuantity;
+    public GameObject Faucet;
 
     [Header("Curtain Settings")]
     public GameObject curtain;
@@ -101,6 +102,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 curtainButton.SetActive(true);
                 lightButtonObject.SetActive(false);
                 soapSpriteRenderer.enabled = false;
+                Faucet.SetActive(false);
                 SoapQuantity.SetActive(false);
                 FoodQuantity.SetActive(false);
                 break;
@@ -109,6 +111,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
                 lightButtonObject.SetActive(false);
+                Faucet.SetActive(true);
                 soapSpriteRenderer.enabled = false;
                 SoapQuantity.SetActive(false);
                 StartCoroutine(ShowFoodQuantity());
@@ -119,6 +122,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
                 lightButtonObject.SetActive(false);
+                Faucet.SetActive(false);
                 StartCoroutine(ShowSoap());
                 FoodQuantity.SetActive(false);
                 break;
@@ -128,6 +132,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 lightButtonObject.SetActive(true);
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
+                Faucet.SetActive(false);
                 soapSpriteRenderer.enabled = false;
                 SoapQuantity.SetActive(false);
                 FoodQuantity.SetActive(false);

@@ -547,7 +547,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 302187813}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1271956075}
+        m_TargetAssemblyTypeName: SlideUpOverlay, Assembly-CSharp
+        m_MethodName: OnButtonClick
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 3
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &302187813
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3164,6 +3176,8 @@ MonoBehaviour:
   PetType: {fileID: 862676917}
   Adopt: {fileID: 197346897}
   animatorControllers:
+  - {fileID: 9100000, guid: ba1c7312c15afd94f9917cc964b35c9c, type: 2}
+  - {fileID: 9100000, guid: ba1c7312c15afd94f9917cc964b35c9c, type: 2}
   - {fileID: 9100000, guid: ba1c7312c15afd94f9917cc964b35c9c, type: 2}
   - {fileID: 9100000, guid: d36d49bada951784da3d26e23ba52734, type: 2}
 --- !u!1 &1514748524

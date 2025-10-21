@@ -36,6 +36,8 @@ public class PetBehaviour : MonoBehaviour
 
     public Animator foodAnimator;
 
+    public Animator FaucerAnimator;
+
     [Header("Bath Settings")]
     public GameObject[] bubblePrefabs;  // Bubble prefabs
     public Animator ShowerAnimator;
@@ -109,6 +111,7 @@ public class PetBehaviour : MonoBehaviour
         switch (pet.pet_type)
         {
             case "cat_1": animator.runtimeAnimatorController = controllers[0]; break;
+            case "dog_1": animator.runtimeAnimatorController = controllers[3]; break;
             default: animator.runtimeAnimatorController = controllers[0]; break;
         }
 
@@ -697,6 +700,7 @@ public class PetBehaviour : MonoBehaviour
         {
             button.SetActive(!isLightOn);
         }
+        SM.PlayLightSound();
         if (isLightOn)
         {
             statManager.isSleeping = true;
@@ -772,5 +776,18 @@ public class PetBehaviour : MonoBehaviour
                 Debug.LogError($"Error updating sleep status on backend: {request.error}");
             }
         }
+    }
+
+    public void FaucetFlow()
+    {
+        FaucerAnimator.SetBool("flow", true);
+        SM.PlayFaucet();
+        StartCoroutine(waitForFaucet());
+    }
+    
+    private IEnumerator waitForFaucet()
+    {
+        yield return new WaitForSeconds(12f);
+        FaucerAnimator.SetBool("flow", false);
     }
 }

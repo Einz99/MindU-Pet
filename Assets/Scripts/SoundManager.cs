@@ -6,10 +6,12 @@ public class SoundManager : MonoBehaviour
     // Reference to the AudioSource component
     private AudioSource audioSource;
     public AudioSource BGXSource;
-    public AudioClip backgroundMusic;
-    public AudioClip dogPant;
+    public AudioClip[] backgroundMusic;
+    public AudioClip[] dogPant;
     public AudioClip boomerang; // still not used
     public AudioClip ballBounce; // same
+    public AudioClip lightSwitch;
+    public AudioClip Faucet;
     public AudioClip[] catMeows;
     public AudioClip digitalClick; // same
     public AudioClip eating; 
@@ -27,19 +29,33 @@ public class SoundManager : MonoBehaviour
         // Get the AudioSource component attached to this GameObject
         audioSource = GetComponent<AudioSource>();
 
-        // Set the AudioSource properties for background music (BGX)
-        BGXSource.clip = backgroundMusic;
-        BGXSource.loop = true; // Loop the background music
-        BGXSource.volume = 0.5f; // Set volume for background music
-
-        // Play the background music
-        BGXSource.Play();
+        // Start the random background music coroutine
+        StartCoroutine(PlayRandomBackgroundMusic());
 
         // Get the pet type from PlayerPrefs
         pet_type = PlayerPrefs.GetString(petKey + "PetType");
 
         // Start the random sound play coroutine
         StartCoroutine(PlayRandomPetSounds());
+    }
+
+    // Coroutine to randomly play background music from the array and loop
+    private IEnumerator PlayRandomBackgroundMusic()
+    {
+        while (true)
+        {
+            // Randomly select a BGM from the array
+            int randomIndex = Random.Range(0, backgroundMusic.Length);
+
+            // Set the randomly selected clip
+            BGXSource.clip = backgroundMusic[randomIndex];
+
+            // Play the selected clip and loop it
+            BGXSource.Play();
+
+            // Wait until the clip finishes before selecting a new one
+            yield return new WaitForSeconds(BGXSource.clip.length);
+        }
     }
 
     // Coroutine to randomly play pet sounds every 30-60 seconds
@@ -61,7 +77,8 @@ public class SoundManager : MonoBehaviour
             else if (pet_type == "dog_1" || pet_type == "dog_2" || pet_type == "dog_3")
             {
                 // Play the dog pant sound
-                audioSource.PlayOneShot(dogPant);
+                int randomIndex = Random.Range(0, dogPant.Length);
+                audioSource.PlayOneShot(dogPant[randomIndex]);
             }
         }
     }
@@ -95,5 +112,15 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(sound);  // Play the sound
         yield return new WaitForSeconds(duration);  // Wait for the duration
         // No need to stop explicitly since PlayOneShot won't overlap, but you can stop it here if needed
+    }
+
+    public void PlayFaucet()
+    {
+        audioSource.PlayOneShot(Faucet);
+    }
+
+    public void PlayLightSound()
+    {
+        audioSource.PlayOneShot(lightSwitch);
     }
 }

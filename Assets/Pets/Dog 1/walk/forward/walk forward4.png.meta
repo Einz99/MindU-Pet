@@ -103,10 +103,10 @@ TextureImporter:
       name: walk forward4_0
       rect:
         serializedVersion: 2
-        x: 243
-        y: 0
-        width: 335
-        height: 626
+        x: 294
+        y: 87
+        width: 232
+        height: 452
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
