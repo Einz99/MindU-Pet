@@ -183,6 +183,15 @@ public class SlideUpOverlay : MonoBehaviour
             Debug.Log("Pet successfully created: " + request.downloadHandler.text);
 
             DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
+            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
+            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene); // Assuming bath is stored in hygiene
+            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
+
+            // Create an array with the stats
+            int[] stats = new int[] { playfulness, hunger, bath, sleep };
+            // Call UpdateButtonFill with the stats array
+            HorizontalPageScroller.Instance.UpdateButtonFill(stats);
         }
         else
         {

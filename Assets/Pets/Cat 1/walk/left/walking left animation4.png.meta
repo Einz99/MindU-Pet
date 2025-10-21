@@ -116,12 +116,12 @@ TextureImporter:
       name: walking left animation4_0
       rect:
         serializedVersion: 2
-        x: 15
+        x: 159
         y: 0
-        width: 41
-        height: 31
+        width: 412
+        height: 311
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 1d732aaeba1e0f944b297410ee2a34f1
     internalID: 0
     vertices: []
     indices: 

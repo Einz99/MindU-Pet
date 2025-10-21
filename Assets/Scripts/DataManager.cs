@@ -146,9 +146,6 @@ public class DataManager : MonoBehaviour
 
             yield return null; // Wait until the next frame
         }
-
-        // Scene is now fully loaded and activated
-        Debug.Log("Scene Loaded: " + sceneName);
     }
 
     // Save pet data to PlayerPrefs
@@ -162,7 +159,6 @@ public class DataManager : MonoBehaviour
         PlayerPrefs.SetString(petKey + PlayerPrefKeys.PetType, pets.pet_type);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, pets.coins);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetFoodStack, pets.food_stack);
-        PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHygieneStack, pets.hygiene_stack);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHead, pets.pet_head);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetNeck, pets.pet_neck);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetEyes, pets.pet_eyes);
@@ -172,6 +168,16 @@ public class DataManager : MonoBehaviour
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetSleep, pets.sleep);
         PlayerPrefs.SetString(petKey + PlayerPrefKeys.PetCreatedAt, pets.created_at);
         PlayerPrefs.SetString(petKey + PlayerPrefKeys.PetUpdatedAt, pets.updated_at);
+
+        if (!PlayerPrefs.HasKey(petKey + PlayerPrefKeys.isCurtainOpen))
+        {
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.isCurtainOpen, 0);  // Set default value if key doesn't exist
+        }
+        if (!PlayerPrefs.HasKey(petKey + PlayerPrefKeys.soap_type))
+        {
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.soap_type, 0);  // Set default value if key doesn't exist
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.soap_quantity, 3);
+        }
         PlayerPrefs.Save();  // Save all PlayerPrefs data
     }
 
@@ -211,7 +217,6 @@ public class Pet
     public string pet_type;
     public int coins = 20;
     public int food_stack = 5;
-    public int hygiene_stack = 5;
     public int pet_head = 0;
     public int pet_neck = 0;
     public int pet_eyes = 0;
@@ -221,5 +226,7 @@ public class Pet
     public int sleep = 70;
     public string created_at;
     public string updated_at;
+    public int soap_type;
+    public int soap_quantity;
 }
 

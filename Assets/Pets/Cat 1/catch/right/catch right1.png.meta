@@ -116,12 +116,12 @@ TextureImporter:
       name: catch right1_0
       rect:
         serializedVersion: 2
-        x: 16
+        x: 69
         y: 0
-        width: 41
-        height: 32
+        width: 544
+        height: 381
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 9ee439e193fbcdf4db24750633e0b5ee
     internalID: 0
     vertices: []
     indices: 

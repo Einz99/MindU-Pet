@@ -76,8 +76,8 @@
     <Compile Include="Assets\Plugins\websocket-sharp\Server\WebSocketServer.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Net\InputChunkState.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Net\HttpVersion.cs" />
-    <Compile Include="Assets\Plugins\websocket-sharp\Net\ServerSslConfiguration.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Server\HttpRequestEventArgs.cs" />
+    <Compile Include="Assets\Plugins\websocket-sharp\Net\ServerSslConfiguration.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Net\Cookie.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Server\ServerState.cs" />
     <Compile Include="Assets\Plugins\websocket-sharp\Server\WebSocketBehavior.cs" />

@@ -116,12 +116,12 @@ TextureImporter:
       name: eatin animation-export6_0
       rect:
         serializedVersion: 2
-        x: 21
-        y: 2
-        width: 30
-        height: 33
+        x: 219
+        y: 29
+        width: 282
+        height: 322
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 1e6d591a6938fdd428af2bb13649a54a
     internalID: 0
     vertices: []
     indices: 

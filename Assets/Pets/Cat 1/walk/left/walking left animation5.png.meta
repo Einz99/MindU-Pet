@@ -116,10 +116,10 @@ TextureImporter:
       name: walking left animation5_0
       rect:
         serializedVersion: 2
-        x: 15
+        x: 159
         y: 0
-        width: 43
-        height: 32
+        width: 412
+        height: 311
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

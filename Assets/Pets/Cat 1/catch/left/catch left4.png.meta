@@ -116,12 +116,12 @@ TextureImporter:
       name: catch left4_0
       rect:
         serializedVersion: 2
-        x: 16
+        x: 139
         y: 0
-        width: 42
-        height: 31
+        width: 512
+        height: 381
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: c8fc0eff9830f5b42a05eebd65ec8e62
     internalID: 0
     vertices: []
     indices: 
