@@ -35,7 +35,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <UnityProjectGenerator>Package</UnityProjectGenerator>
-    <UnityProjectGeneratorVersion>2.0.23</UnityProjectGeneratorVersion>
+    <UnityProjectGeneratorVersion>2.0.25</UnityProjectGeneratorVersion>
     <UnityProjectGeneratorStyle>SDK</UnityProjectGeneratorStyle>
     <UnityProjectType>Editor:5</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
@@ -48,20 +48,20 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettingsProviderView.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\EditorPreferencesProviderView.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\BackupSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\LinkerPropertyProviderSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\CustomPropertyProviderSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\AssemblyOptionsSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\TypeOptionsSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettingsProvider.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\CoreProviderSettings.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\EditorPreferencesProvider.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\ProjectSettings\ScriptReferenceResolverSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettingsProviderView.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\EditorPreferencesProviderView.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\BackupSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\LinkerPropertyProviderSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\CustomPropertyProviderSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\AssemblyOptionsSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\TypeOptionsSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettingsProvider.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\CoreProviderSettings.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\EditorPreferencesProvider.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\ProjectSettings\ScriptReferenceResolverSettings.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\SettingsProvider\Unity.VisualScripting.SettingsProvider.Editor.asmdef" />
+    <None Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\SettingsProvider\Unity.VisualScripting.SettingsProvider.Editor.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -569,7 +569,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+      <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
@@ -593,7 +593,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.IonicZip">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
+      <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="unityplastic">
@@ -605,11 +605,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
-      <HintPath>Library\PackageCache\com.unity.visualscripting@b4d700247d4b\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
+      <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Mono.Cecil">

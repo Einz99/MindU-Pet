@@ -31,6 +31,7 @@ public class HorizontalPageScroller : MonoBehaviour
     public GameObject lightButtonObject; // Reference to the light button GameObject
     public GameObject FoodQuantity;
     public GameObject Faucet;
+    public GameObject Toys;
 
     [Header("Curtain Settings")]
     public GameObject curtain;
@@ -105,6 +106,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 Faucet.SetActive(false);
                 SoapQuantity.SetActive(false);
                 FoodQuantity.SetActive(false);
+                StartCoroutine(ShowToys());
                 break;
 
             case 1:
@@ -113,6 +115,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 lightButtonObject.SetActive(false);
                 Faucet.SetActive(true);
                 soapSpriteRenderer.enabled = false;
+                Toys.SetActive(false);
                 SoapQuantity.SetActive(false);
                 StartCoroutine(ShowFoodQuantity());
                 break;
@@ -122,6 +125,7 @@ public class HorizontalPageScroller : MonoBehaviour
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
                 lightButtonObject.SetActive(false);
+                Toys.SetActive(false);
                 Faucet.SetActive(false);
                 StartCoroutine(ShowSoap());
                 FoodQuantity.SetActive(false);
@@ -130,6 +134,7 @@ public class HorizontalPageScroller : MonoBehaviour
             case 3:
                 // Enable the light button on page 3
                 lightButtonObject.SetActive(true);
+                Toys.SetActive(false);
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
                 Faucet.SetActive(false);
@@ -138,6 +143,12 @@ public class HorizontalPageScroller : MonoBehaviour
                 FoodQuantity.SetActive(false);
                 break;
         }
+    }
+
+    private IEnumerator ShowToys()
+    {
+        yield return new WaitForSeconds(0.8f);
+        Toys.SetActive(true);
     }
 
     private IEnumerator ShowSoap()

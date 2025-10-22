@@ -27,4 +27,6 @@ public static class PlayerPrefKeys
     public const string isSleeping = "isSleeping";
     public const string soap_type = "soap_type";
     public const string soap_quantity = "soap_quantity";
+
+    public const string toyPrefix = "Toy_";
 }

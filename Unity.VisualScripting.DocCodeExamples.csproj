@@ -35,7 +35,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <UnityProjectGenerator>Package</UnityProjectGenerator>
-    <UnityProjectGeneratorVersion>2.0.23</UnityProjectGeneratorVersion>
+    <UnityProjectGeneratorVersion>2.0.25</UnityProjectGeneratorVersion>
     <UnityProjectGeneratorStyle>SDK</UnityProjectGeneratorStyle>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
@@ -48,11 +48,11 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\DocCodeExamples\EventBusExamples.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\DocCodeExamples\VariableExamples.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\DocCodeExamples\EventBusExamples.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\DocCodeExamples\VariableExamples.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Library\PackageCache\com.unity.visualscripting@b4d700247d4b\DocCodeExamples\Unity.VisualScripting.DocCodeExamples.asmdef" />
+    <None Include="Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\DocCodeExamples\Unity.VisualScripting.DocCodeExamples.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
