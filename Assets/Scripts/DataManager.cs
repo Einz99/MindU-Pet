@@ -45,9 +45,12 @@ public class DataManager : MonoBehaviour
     {
         // Retrieve student_id and apiUrl from PlayerPrefs, with default values if not found
         studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 46);
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.2:3000");  // Fallback URL if not found
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://10.186.218.142:3000");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
-
+        PlayerPrefs.SetString(PlayerPrefKeys.API_URL, "http://10.186.218.142:3000");
+        PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, 46);
+        PlayerPrefs.Save();
         Debug.Log($"Student ID: {studentId}, Primary API URL: {apiUrl}, Secondary API URL: {apiUrlSecondary}");
     }
 

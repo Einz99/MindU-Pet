@@ -295,7 +295,7 @@ public class MiniGame : MonoBehaviour
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-
+        
         // Construct the API URL for updating playfulness
         string url = $"{apiUrlSecondary}/pets/{petId}/addPlay";
 

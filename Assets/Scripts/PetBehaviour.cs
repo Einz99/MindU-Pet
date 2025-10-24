@@ -165,7 +165,7 @@ public class PetBehaviour : MonoBehaviour
         transform.position = new Vector3(0f, -2.25f, 0f);
 
         // Set the initial scale of the pet to 0.33 (idle state scale)
-        transform.localScale = new Vector3(0.33f, 0.33f, 1f);
+        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
 
         // Set initial state to idle
         animator.SetInteger("sleepType", 0); // Idle state initially
@@ -230,7 +230,7 @@ public class PetBehaviour : MonoBehaviour
         StartCoroutine(idleAccessories());
 
         // Set the idle scale to 0.33 (fixed value for idle state)
-        transform.localScale = new Vector3(0.33f, 0.33f, 1f);
+        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
     }
 
     private IEnumerator idleAccessories()
@@ -376,7 +376,7 @@ public class PetBehaviour : MonoBehaviour
         float normalizedY = Mathf.InverseLerp(-2.55f, -1.88f, currentY);
 
         // Calculate the new scale based on the normalized Y value
-        float idleScale = Mathf.Lerp(0.33f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
+        float idleScale = Mathf.Lerp(0.44f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
         float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY); // Movement scale range from 0.5 to 0.2
 
         // Apply the new scale to the pet
@@ -489,6 +489,19 @@ public class PetBehaviour : MonoBehaviour
             }
             accessoryObjects[2].transform.localPosition = glassesOriginalPosition;
             accessoryObjects[2].transform.localScale = glassesOriginalScale;
+            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
+            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger) + 10;
+            if (hunger >= 100) {
+                hunger = 100;
+            }
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
+            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
+
+            // Create an array with the updated stats
+            int[] stats = new int[] { playfulness, hunger, bath, sleep };
+        
+        // Call UpdateButtonFill with the stats array
+        HPS.UpdateButtonFill(stats);
         }
     }
 
@@ -667,18 +680,15 @@ public class PetBehaviour : MonoBehaviour
         // Call the API to update soap usage on the backend
         yield return StartCoroutine(UpdateSoapUsageOnBackend());
     
-        // Call the DataManager API to sync pet data after the shower routine
-        DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-    
         // Retrieve and update stats
         int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
         int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
+        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) + 5;  // Assuming bath is stored in hygiene
         int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
     
         // Create an array with the updated stats
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
-    
+        
         // Call UpdateButtonFill with the stats array
         HPS.UpdateButtonFill(stats);
         ShowerButton.SetActive(false);

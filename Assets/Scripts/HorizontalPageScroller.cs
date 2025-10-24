@@ -297,14 +297,22 @@ public class HorizontalPageScroller : MonoBehaviour
     {
         if (newValues.Length != ButtonFills.Length)
         {
-            Debug.LogError("The number of values in newValues array must match the ButtonFills array length!");
+            Debug.LogError($"Array length mismatch! Expected {ButtonFills.Length}, got {newValues.Length}");
             return;
         }
-
-        // Loop through all ButtonFills and set their fill percentage
+        Debug.Log("I reach it");
+        // ✅ Add null checks
         for (int i = 0; i < ButtonFills.Length; i++)
         {
-            ButtonFills[i].SetFillPercentage(newValues[i]);
+            if (ButtonFills[i] != null)
+            {
+                Debug.Log($"Setting ButtonFill[{i}] to {newValues[i]}%");
+                ButtonFills[i].SetFillPercentage(newValues[i]);
+            }
+            else
+            {
+                Debug.LogError($"ButtonFills[{i}] is null!");
+            }
         }
     }
 }

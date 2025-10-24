@@ -13,6 +13,16 @@ public class StatManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        // Find the HPS if not assigned in Inspector
+        if (HPS == null)
+        {
+            HPS = FindObjectOfType<HorizontalPageScroller>();
+            if (HPS == null)
+            {
+                Debug.LogError("HorizontalPageScroller not found! Make sure it exists in the scene.");
+            }
+        }
+
         // Start the stats update coroutine
         StartCoroutine(UpdateStatsEvery10Minutes());
     }
@@ -20,35 +30,52 @@ public class StatManager : MonoBehaviour
     // Coroutine to update stats every 10 minutes
     private IEnumerator UpdateStatsEvery10Minutes()
     {
-        // Wait until the next 10-minute mark
         yield return new WaitForSeconds(CalculateTimeUntilNextInterval());
 
-        // Now that we're synchronized, start the regular 10-minute updates
         while (true)
         {
             string petKey = PlayerPrefKeys.PetPrefix;
+
             // Retrieve stats from PlayerPrefs
-            statFill[0] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness); // playfulness
-            statFill[1] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger) - 5;      // hunger
-            statFill[2] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene) - 3;     // hygiene
+            statFill[0] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness) - 10;
+            statFill[1] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger) - 5;
+            statFill[2] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene) - 3;
+
             bool isSleeping = PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping) == 1;
             if (isSleeping)
             {
                 statFill[3] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep) + 7; 
-            } else
+            }
+            else
             {
                 statFill[3] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep) - 7;
             }
 
+            // ✅ Clamp all values between 0 and 100
+            for (int i = 0; i < statFill.Length; i++)
+            {
+                statFill[i] = Mathf.Clamp(statFill[i], 0, 100);
+            }
+
+            // Save clamped values
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetPlayfulness, statFill[0]);
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHunger, statFill[1]);
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHygiene, statFill[2]);
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetSleep, statFill[3]);
             PlayerPrefs.Save();
-            HPS.UpdateButtonFill(statFill);
 
-            // Wait for 10 minutes before updating again
-            yield return new WaitForSeconds(600f); // 600 seconds = 10 minutes
+            // ✅ Add null check before calling
+            if (HPS != null)
+            {
+                Debug.Log($"Updating stats: Playfulness={statFill[0]}, Hunger={statFill[1]}, Hygiene={statFill[2]}, Sleep={statFill[3]}");
+                HPS.UpdateButtonFill(statFill);
+            }
+            else
+            {
+                Debug.LogError("HPS is null! Cannot update button fills.");
+            }
+
+            yield return new WaitForSeconds(600f); // 10 minutes
         }
     }
 
