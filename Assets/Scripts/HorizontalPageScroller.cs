@@ -3,7 +3,6 @@ using System.Collections;
 
 public class HorizontalPageScroller : MonoBehaviour
 {
-    public static HorizontalPageScroller Instance { get; private set; }
     [Header("Scroll Settings")]
     public Transform contentParent; // Parent object containing all 4 sprites
     public float pageWidth = 1920f; // Width of each page (adjust to your screen/canvas size)
@@ -238,12 +237,12 @@ public class HorizontalPageScroller : MonoBehaviour
         for (int i = 0; i < accessoryObjects.Length; i++)
         {
             accessoryObjects[i].SetActive(false);
-            if (!goLeft && ((isCollarOn && i == 3) || (isGlassesOn && i == 5)))
+            if (!goLeft && ((isCollarOn && i == 3) || (isGlassesOn && i == 5) || (isHatOn && i == 7)))
             {
                 accessoryObjects[i].SetActive(true);
                 continue;
             }
-            else if (goLeft && ((isCollarOn && i == 4) || (isGlassesOn && i == 6)))
+            else if (goLeft && ((isCollarOn && i == 4) || (isGlassesOn && i == 6) || (isHatOn && i == 8)))
             {
                 accessoryObjects[i].SetActive(true);
                 continue;

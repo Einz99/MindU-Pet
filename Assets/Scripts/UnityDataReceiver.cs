@@ -12,7 +12,7 @@ public class UnityDataReceiver : MonoBehaviour
         if (receiver != null)
         {
             // Simulate receiving data from React Native
-            receiver.ReceiveDataFromReactNative("46,http://192.168.1.5:3000");
+            receiver.ReceiveDataFromReactNative("46,http://192.168.1.2:3000");
         }
     }
     public void ReceiveDataFromReactNative(string data)

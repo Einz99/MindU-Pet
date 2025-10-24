@@ -18,9 +18,10 @@ public class BathMenu : MonoBehaviour
     public TMP_Text Confirmtext;
     public Button ConfirmTransact;
     public TMP_Text[] Coins;
+    public SoundManager SM;
 
-    // Coin deduction values for each soap
-    private int[] soapCosts = new int[] { 10, 20, 30, 40 };
+    // Coin deduction values for each soap (buying adds 3 quantity)
+    private int[] soapCosts = new int[] { 5, 10, 15, 20 };
 
     // Soap type strings corresponding to the index
     private string[] soapTypes = new string[] { "soap_1", "soap_2", "soap_3", "soap_4" };
@@ -28,10 +29,17 @@ public class BathMenu : MonoBehaviour
     // Soap names for display
     private string[] soapNames = new string[] { "Fresh Puppy", "Tutti Frutie", "Summer Air", "Zen Garden" };
 
-    // Static variable to store the selected soap index
+    // Currently active soap index
+    private int currentActiveSoapIndex = 0;
+
+    // Static variable to store the selected soap index for purchase
     private int selectedSoapIndex;
 
-    public SoundManager SM;
+    private bool isToggling;
+
+    // Dictionary to store soap quantities fetched from backend
+    private System.Collections.Generic.Dictionary<string, int> soapQuantities = 
+        new System.Collections.Generic.Dictionary<string, int>();
 
     void Start()
     {
@@ -41,66 +49,129 @@ public class BathMenu : MonoBehaviour
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
 
-        if (!PlayerPrefs.HasKey(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type))
-        {
-            OnToggle(0);
-        }
-        else
-        {
-            int soap_type = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type);
-            OnToggle(soap_type);
-        }
+        // Fetch all soap data from backend
+        StartCoroutine(FetchAllSoapData());
     }
 
-    public void OnToggle(int soapIndex)
+    // Fetch all soap types and quantities from backend on start
+    private IEnumerator FetchAllSoapData()
     {
-        // Loop through all toggles and set the appropriate one
-        foreach (var toggle in toggles)
-        {
-            toggle.isOn = false;
-        }
-        toggles[soapIndex].isOn = true;
-        soap.sprite = soaps[soapIndex];
-
-        // Fetch soap type and quantity from the backend when toggling
-        StartCoroutine(FetchSoapData(soapTypes[soapIndex]));
-    }
-
-    // Coroutine to fetch soap type and quantity from the backend
-    private IEnumerator FetchSoapData(string soapType)
-    {
-        string url = $"{apiUrlSecondary}/pets/{petId}/soap"; // Fetch soap type and quantity from the backend
+        string url = $"{apiUrlSecondary}/pets/{petId}/soap";
         UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // Parse the response from the backend
-            var response = JsonUtility.FromJson<SoapResponse>(request.downloadHandler.text);
+            string responseText = request.downloadHandler.text;
+            Debug.Log("Soap data response: " + responseText);
 
-            // If no soap data exists or quantity is 0, set the soap type and quantity accordingly
-            if (response.soap_type == null || response.quantity == 0)
-            {
-                soapquantity.text = "Quantity: 0";
-                // If no soap exists, set soap type to selected and quantity to 0
-                PlayerPrefs.SetString(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type, soapType);
-                PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity, 0);
-                PlayerPrefs.Save();
-            }
-            else
-            {
-                // Set the soap type and quantity fetched from the backend
-                PlayerPrefs.SetString(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type, soapType);
-                PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity, response.quantity);
-                PlayerPrefs.Save();
+            // Parse the response - it's an array of soap objects
+            SoapResponse[] soapData = JsonUtility.FromJson<SoapResponseList>("{\"soapResponses\":" + responseText + "}").soapResponses;
 
-                // Update the UI with the soap quantity
-                soapquantity.text = "Quantity: " + response.quantity.ToString();
+            // Initialize all soap quantities to 0
+            for (int i = 0; i < soapTypes.Length; i++)
+            {
+                soapQuantities[soapTypes[i]] = 0;
             }
+
+            // Update quantities from backend response
+            if (soapData != null && soapData.Length > 0)
+            {
+                foreach (var soap in soapData)
+                {
+                    if (!string.IsNullOrEmpty(soap.soap_type))
+                    {
+                        soapQuantities[soap.soap_type] = soap.quantity;
+                    }
+                }
+            }
+
+            // Set the initial active soap (default to soap_1 or first available)
+            int initialSoapIndex = 0;
+            if (PlayerPrefs.HasKey(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type))
+            {
+                string savedSoapType = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type);
+                initialSoapIndex = System.Array.IndexOf(soapTypes, savedSoapType);
+                if (initialSoapIndex < 0) initialSoapIndex = 0;
+            }
+
+            OnToggle(initialSoapIndex);
         }
         else
         {
             Debug.LogError("Error fetching soap data: " + request.error);
+            // Default to soap_1 with 0 quantity if fetch fails
+            for (int i = 0; i < soapTypes.Length; i++)
+            {
+                soapQuantities[soapTypes[i]] = 0;
+            }
+            OnToggle(0);
+        }
+    }
+
+    public void OnToggle(int soapIndex)
+    {
+        if (isToggling) return;
+        isToggling = true;
+
+        // Prevent toggling off - always keep one active
+        currentActiveSoapIndex = soapIndex;
+
+        // Update all toggles - only the selected one should be on
+        for (int i = 0; i < toggles.Length; i++)
+        {
+            if (toggles[i] != null)
+            {
+                toggles[i].isOn = (i == soapIndex);
+            }
+        }
+
+        // Update the soap sprite
+        soap.sprite = soaps[soapIndex];
+
+        // Get the quantity for this soap type
+        int quantity = 0;
+        if (soapQuantities.ContainsKey(soapTypes[soapIndex]))
+        {
+            quantity = soapQuantities[soapTypes[soapIndex]];
+        }
+
+        // Update the quantity display
+        soapquantity.text = $"{quantity}x";
+
+        // Save the current soap type to PlayerPrefs
+        PlayerPrefs.SetString(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type, soapTypes[soapIndex]);
+        PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity, quantity);
+        PlayerPrefs.Save();
+
+        // Update backend to set this soap as active (is_in_use = TRUE)
+        StartCoroutine(UpdateActiveSoapOnServer(soapTypes[soapIndex]));
+
+        isToggling = false;
+    }
+
+    // Update which soap is currently active on the backend
+    private IEnumerator UpdateActiveSoapOnServer(string soapType)
+    {
+        string url = $"{apiUrlSecondary}/pets/{petId}/soap/active";
+        string jsonData = JsonUtility.ToJson(new soapPayload { soap_type = soapType });
+
+        UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
+        {
+            uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData)),
+            downloadHandler = new DownloadHandlerBuffer()
+        };
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("Active soap updated successfully: " + request.downloadHandler.text);
+        }
+        else
+        {
+            Debug.LogError("Error updating active soap: " + request.error);
         }
     }
 
@@ -110,7 +181,7 @@ public class BathMenu : MonoBehaviour
         selectedSoapIndex = selected;
 
         // Update the confirmation panel text with soap name and cost
-        Confirmtext.text = $"Are you sure you want to buy {soapNames[selected]} for {soapCosts[selected]} Coins?";
+        Confirmtext.text = $"Are you sure you want to buy {soapNames[selected]} for {soapCosts[selected]} Coins? (+3 uses)";
 
         // Show the confirmation panel
         ConfirmPanel.SetActive(true);
@@ -118,7 +189,10 @@ public class BathMenu : MonoBehaviour
 
     public void OnConfirm()
     {
-        ReduceCoinsAndUpdateSoap();
+        if(gameObject.activeInHierarchy)
+        {
+            ReduceCoinsAndUpdateSoap();
+        }
     }
 
     private void ReduceCoinsAndUpdateSoap()
@@ -135,12 +209,11 @@ public class BathMenu : MonoBehaviour
             // Deduct the coins
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins - soapCost);
 
-            // Save the soap transaction
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.soap_quantity, 1); // Assuming 1 soap is bought
+            // Sync with the backend (this adds 3 to quantity)
+            string url = $"{apiUrlSecondary}/pets/{petId}/soap";
+            string jsonData = JsonUtility.ToJson(new soapPayload { soap_type = soapType });
 
-            // Sync with the backend
-            string url = $"{apiUrlSecondary}/pets/{petId}/soap"; // Use the secondary API
-            string jsonData = JsonUtility.ToJson(new { soapType = soapType });
+            Debug.Log("Sending JSON data: " + jsonData);
 
             // Create the HTTP request
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -167,6 +240,19 @@ public class BathMenu : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Soap updated successfully: " + request.downloadHandler.text);
+
+            // Parse the response to get the new quantity
+            var response = JsonUtility.FromJson<SoapPurchaseResponse>(request.downloadHandler.text);
+            
+            // Update local quantity
+            if (response != null)
+            {
+                soapQuantities[soapTypes[selectedSoapIndex]] = response.new_quantity;
+                
+                // Update PlayerPrefs
+                PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity, response.new_quantity);
+            }
+
             PlayerPrefs.Save();
 
             // Update the displayed coin amount
@@ -176,7 +262,7 @@ public class BathMenu : MonoBehaviour
                 coin.text = PlayerPrefs.GetInt(petKey2 + PlayerPrefKeys.PetCoins).ToString();
             }
 
-            // Automatically toggle the bought soap
+            // Automatically toggle to the bought soap
             OnToggle(selectedSoapIndex);
         }
         else
@@ -187,13 +273,27 @@ public class BathMenu : MonoBehaviour
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins);
             PlayerPrefs.Save();
         }
-
-        
+        ConfirmPanel.SetActive(false);
     }
 
     private void ShowNotEnoughCoinsPanel()
     {
         notEnoughCoinsPanel.SetActive(true);
+    }
+
+    // Add listeners to prevent toggles from being turned off
+    public void OnToggleValueChanged(int index)
+    {
+        // If someone tries to turn off the current toggle, turn it back on
+        if (!toggles[index].isOn && index == currentActiveSoapIndex)
+        {
+            toggles[index].isOn = true;
+        }
+        // If someone turns on a different toggle, switch to it
+        else if (toggles[index].isOn && index != currentActiveSoapIndex)
+        {
+            OnToggle(index);
+        }
     }
 }
 
@@ -202,4 +302,26 @@ public class SoapResponse
 {
     public string soap_type;
     public int quantity;
+}
+
+[System.Serializable]
+public class soapPayload
+{
+    public string soap_type;
+}
+
+[System.Serializable]
+public class SoapResponseList
+{
+    public SoapResponse[] soapResponses;
+}
+
+[System.Serializable]
+public class SoapPurchaseResponse
+{
+    public int pet_id;
+    public string soap_type;
+    public int new_quantity;
+    public int new_coins;
+    public bool is_in_use;
 }

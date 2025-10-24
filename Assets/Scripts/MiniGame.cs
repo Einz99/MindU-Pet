@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class MiniGame : MonoBehaviour
@@ -36,6 +37,7 @@ public class MiniGame : MonoBehaviour
     private Vector3 badCatchScale = new Vector3(0.75f, 0.75f, 1);
     private bool isLeft;
     private bool tappable = true;
+    public HorizontalPageScroller HPS;
 
     private void Start()
     {
@@ -109,7 +111,7 @@ public class MiniGame : MonoBehaviour
             playBall.sprite = toysSprite[index];
             tappable = false;
             // Start the hand movement coroutine, then proceed to toss
-            StartCoroutine(HandMovementAndToss(sliderValue)); 
+            StartCoroutine(HandMovementAndToss(sliderValue));
         }
     }
 
@@ -153,7 +155,7 @@ public class MiniGame : MonoBehaviour
     {
         // Reset the ball's position and scale to its initial local state
         BalltoPlay.transform.localPosition = initialPosition;  // Using localPosition to move relative to parent
-        BalltoPlay.transform.localScale = initialScale;  
+        BalltoPlay.transform.localScale = initialScale;
 
         float timeElapsed = 0f;
         float moveDuration = 1f;  // Adjust this duration for smoother or faster movement
@@ -199,15 +201,15 @@ public class MiniGame : MonoBehaviour
     {
         isGameRunning = false;
         SliderGameBar.SetActive(false);
-    
+
         Vector3 targetPosition = initialPosition;
         Vector3 localTargetScale = initialScale;
-    
+
         // Randomize the position (left or right)
         Vector3 successTarget = GetRandomizedTargetPosition(successPositionLeft, successPositionRight);
         Vector3 goodCatchTarget = GetRandomizedTargetPosition(goodCatchPositionLeft, goodCatchPositionRight);
         Vector3 badCatchTarget = GetRandomizedTargetPosition(badCatchPositionLeft, badCatchPositionRight);
-    
+
         if (value >= 40 && value <= 60)
         {
             targetPosition = successTarget;
@@ -236,12 +238,12 @@ public class MiniGame : MonoBehaviour
         }
         // Start the ball movement after determining the slider range
         StartCoroutine(BallGo(targetPosition, localTargetScale));
-    
+
         foreach (var toy in Toys)
         {
             toy.GetComponent<Button>().interactable = true;
         }
-    
+
         // Wait for a while before completing the game
         StartCoroutine(waitforsec(3f));  // Wait for 3 seconds before finishing the game
     }
@@ -250,7 +252,7 @@ public class MiniGame : MonoBehaviour
     {
         yield return new WaitForSeconds(second);
         Debug.Log("Waited for " + second);
-        
+
         if (isLeft)
         {
             PetAnimation.SetBool("goJumpLeft", false);
@@ -265,20 +267,88 @@ public class MiniGame : MonoBehaviour
         Toys[index].SetActive(true);
         ButtonForTap.SetActive(false);
         tappable = true;
+        foreach (var button in NavButtons)
+        {
+            button.SetActive(true);
+        }
     }
 
     private void HandleSuccess()
     {
-        Debug.Log("Success! Slider landed between 40-60.");
+        StartCoroutine(UpdatePlayfulness(8));
     }
 
     private void HandleWarning()
     {
-        Debug.Log("Warning! Slider landed between 30-39 or 61-70.");
+        StartCoroutine(UpdatePlayfulness(8));
     }
 
     private void HandleFailure()
     {
-        Debug.Log("Failure! Slider landed outside the defined ranges.");
+        StartCoroutine(UpdatePlayfulness(8));
     }
+
+    private IEnumerator UpdatePlayfulness(int increment)
+    {
+        // Retrieve API URL and pet ID from PlayerPrefs
+        string petKey = PlayerPrefKeys.PetPrefix;
+        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+
+        // Construct the API URL for updating playfulness
+        string url = $"{apiUrlSecondary}/pets/{petId}/addPlay";
+
+        // Create the payload using the PlayfulnessPayload class
+        PlayfulnessPayload payload = new PlayfulnessPayload();
+        payload.increment = increment;  // Set the increment value
+
+        // Serialize the payload to JSON using JsonUtility
+        string jsonData = JsonUtility.ToJson(payload);
+
+        // Create a UnityWebRequest to make a PUT request
+        UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
+        {
+            uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData)),
+            downloadHandler = new DownloadHandlerBuffer()
+        };
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        // Send the request and wait for the response
+        yield return request.SendWebRequest();
+
+        // Handle the response
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("Playfulness updated successfully on the backend.");
+
+            // Retrieve current stats from PlayerPrefs and update playfulness
+            int currentPlayfulness = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness) + increment;
+            if (currentPlayfulness >= 100)
+            {
+                currentPlayfulness = 100;
+            }
+            int hungry = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger);
+            int hygiene = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene);
+            int sleep = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep);
+
+            // Save the updated playfulness to PlayerPrefs
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetPlayfulness, currentPlayfulness);
+            PlayerPrefs.Save();
+
+            // Update UI or other necessary elements with the new stats
+            int[] stats = new int[] { currentPlayfulness, hungry, hygiene, sleep };
+            HPS.UpdateButtonFill(stats);
+        }
+        else
+        {
+            Debug.LogError("Error updating playfulness on backend: " + request.error);
+        }
+    }
+}
+
+[System.Serializable]
+public class PlayfulnessPayload
+{
+    public int increment;  // The increment value for playfulness
 }

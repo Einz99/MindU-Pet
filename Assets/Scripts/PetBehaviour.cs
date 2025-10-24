@@ -72,6 +72,9 @@ public class PetBehaviour : MonoBehaviour
     private Vector3 glassesOriginalScale;
     [Header("Audio Source")]
     public SoundManager SM;
+    public TMP_Text foodStack;
+    public TMP_Text[] Coins;
+    public HorizontalPageScroller HPS;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -85,6 +88,9 @@ public class PetBehaviour : MonoBehaviour
         if (PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping, 0) == 1)
         {
             ToggleLightEffect();
+        } else
+        {
+            FTLIFS = true;
         }
     }
 
@@ -116,6 +122,13 @@ public class PetBehaviour : MonoBehaviour
         }
 
         petNameTxt.text = pet.pet_name;
+        foodStack.text = pet.food_stack.ToString() + "x";
+        foreach (var coins in Coins)
+        {
+            coins.text = pet.coins.ToString();
+        }
+        int[] stats = new int[] { pet.playfulness, pet.hunger, pet.hygiene, pet.sleep };
+        HPS.UpdateButtonFill(stats);
 
         // Set accessories based on saved data
         isHatOn = pet.pet_head > 0;
@@ -140,6 +153,8 @@ public class PetBehaviour : MonoBehaviour
                 case 4: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_neck-5 >= 4 ? SideCollars[pet.pet_neck-5] : SideCollars[4]; break;
                 case 5: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_eyes-5 >= 0 ? SideGlasses[pet.pet_eyes-5] : SideGlasses[0]; break;
                 case 6: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_eyes-1 >= 4 ? SideGlasses[pet.pet_eyes-1] : SideGlasses[0]; break;
+                case 7: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_head-1 >= 0 ? Hats[pet.pet_head-1] : Hats[0] ; break;
+                case 8: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_head-1 >= 0 ? Hats[pet.pet_head-1] : Hats[0] ; break;
             }   
         }
     }
@@ -248,15 +263,18 @@ public class PetBehaviour : MonoBehaviour
         yield return new WaitForSeconds(.1f);
         for (int i = 0; i < accessoryObjects.Length; i++)
         {
-            if (right && isCollarOn && i == 3)
+            accessoryObjects[i].SetActive(false);
+            if (!goLeft && ((isCollarOn && i == 3) || (isGlassesOn && i == 5) || (isHatOn && i == 7)))
             {
                 accessoryObjects[i].SetActive(true);
                 continue;
-            } else if (!right && isCollarOn && i == 4)
+            }
+            else if (goLeft && ((isCollarOn && i == 4) || (isGlassesOn && i == 6) || (isHatOn && i == 8)))
             {
                 accessoryObjects[i].SetActive(true);
                 continue;
-            } else if (i == 0)
+            }
+            else if (i == 0 && isHatOn)
             {
                 accessoryObjects[i].SetActive(true);
                 continue;
@@ -449,9 +467,25 @@ public class PetBehaviour : MonoBehaviour
             foodAnimator.ResetTrigger("GoEat");
             animator.SetBool("eat", false);
             transform.localScale = new Vector3(0.5f, 0.5f, 1f); // Reset scale to idle state
-            foreach (var accessory in accessoryObjects)
+            for (int i = 0; i < accessoryObjects.Length; i++)
             {
-                accessory.SetActive(true); // Show all accessories when done eating
+                if (i > 2)
+                {
+                    accessoryObjects[i].SetActive(false);
+                    continue;
+                }
+                if (isHatOn && i == 0)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
+                if (isGlassesOn && i == 1)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
+                if (isCollarOn && i == 2)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
             }
             accessoryObjects[2].transform.localPosition = glassesOriginalPosition;
             accessoryObjects[2].transform.localScale = glassesOriginalScale;
@@ -475,9 +509,25 @@ public class PetBehaviour : MonoBehaviour
         if (collision.gameObject.CompareTag("soap"))
         {
 
-            foreach (var accessory in accessoryObjects)
+            for (int i = 0; i < accessoryObjects.Length; i++)
             {
-                accessory.SetActive(false); // Hide all accessories when touching soap
+                if (i > 2)
+                {
+                    accessoryObjects[i].SetActive(false);
+                    continue;
+                }
+                if (isHatOn && i == 0)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
+                if (isGlassesOn && i == 1)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
+                if (isCollarOn && i == 2)
+                {
+                    accessoryObjects[i].SetActive(true);
+                }
             }
             foreach (var button in buttonsToDisable)
             {
@@ -487,12 +537,36 @@ public class PetBehaviour : MonoBehaviour
             if (!isTouching)
             {
                 isTouching = true;
-                string petkey = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix);
-                int soap_quantity = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.soap_quantity, 0);
-
-                if (soap_quantity <= 0)
+                int soap_quantity = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity);
+                Debug.Log(soap_quantity);
+                if (soap_quantity == 0)
                 {
                     SoapNotEnoughPanel.SetActive(true);
+                    for (int i = 0; i < accessoryObjects.Length; i++)
+                    {
+                        if (i > 2)
+                        {
+                            accessoryObjects[i].SetActive(false);
+                            continue;
+                        }
+                        if (isHatOn && i == 0)
+                        {
+                            accessoryObjects[i].SetActive(true);
+                        }
+                        if (isGlassesOn && i == 1)
+                        {
+                            accessoryObjects[i].SetActive(true);
+                        }
+                        if (isCollarOn && i == 2)
+                        {
+                            accessoryObjects[i].SetActive(true);
+                        }
+                    }
+                
+                    foreach (var button in buttonsToDisable)
+                    {
+                        button.SetActive(true);  // Enable any buttons that were disabled
+                    }
                     return;
                 }
                 SoapQuantity.SetActive(false);
@@ -558,11 +632,26 @@ public class PetBehaviour : MonoBehaviour
         yield return new WaitForSeconds(1f);  // Wait for animation to finish
     
         // Reset and clean up accessories and buttons after the shower
-        foreach (var accessory in accessoryObjects)
+        for (int i = 0; i < accessoryObjects.Length; i++)
         {
-            accessory.SetActive(true);  // Show all accessories when done showering
+            if (i > 2)
+            {
+                accessoryObjects[i].SetActive(false);
+                continue;
+            }
+            if (isHatOn && i == 0)
+            {
+                accessoryObjects[i].SetActive(true);
+            }
+            if (isGlassesOn && i == 1)
+            {
+                accessoryObjects[i].SetActive(true);
+            }
+            if (isCollarOn && i == 2)
+            {
+                accessoryObjects[i].SetActive(true);
+            }
         }
-    
         foreach (var button in buttonsToDisable)
         {
             button.SetActive(true);  // Enable any buttons that were disabled
@@ -591,7 +680,7 @@ public class PetBehaviour : MonoBehaviour
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
     
         // Call UpdateButtonFill with the stats array
-        HorizontalPageScroller.Instance.UpdateButtonFill(stats);
+        HPS.UpdateButtonFill(stats);
         ShowerButton.SetActive(false);
         bubbleCount = 0;  // Reset bubble count (if needed)
     }
@@ -601,7 +690,7 @@ public class PetBehaviour : MonoBehaviour
     {
         // Retrieve API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
-        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
+        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
 
@@ -743,38 +832,37 @@ public class PetBehaviour : MonoBehaviour
     {
         // Get the pet ID from PlayerPrefs or another source
         string petKey = PlayerPrefKeys.PetPrefix;
-        int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        int petID = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+
         // Construct the URL to your backend API (Make sure the URL is correct)
-        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
+        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string url = $"{apiUrl}/toggle-pet-sleep";  // Change this to your actual API endpoint
 
         // Create the JSON payload
-        var jsonPayload = new
+        SleepPayload jsonPayload = new SleepPayload
         {
-            petId = petId,
-            isSleeping = isSleeping  // Send the sleep state
+            petId = petID,
+            isSleep = isSleeping  // Send the sleep state
         };
 
         // Convert the payload to JSON string
         string jsonString = JsonUtility.ToJson(jsonPayload);
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] jsonToSend = System.Text.Encoding.UTF8.GetBytes(jsonString);
+        request.uploadHandler = new UploadHandlerRaw(jsonToSend);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        Debug.Log("Sending JSON: " + jsonString);
 
-        // Create the UnityWebRequest
-        using (UnityWebRequest request = UnityWebRequest.Put(url, jsonString))
+        // Send the request and wait for the response
+        yield return request.SendWebRequest();
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            // Set the content type to JSON
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            // Send the request and wait for the response
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Successfully updated sleep status on backend.");
-            }
-            else
-            {
-                Debug.LogError($"Error updating sleep status on backend: {request.error}");
-            }
+            Debug.Log("Successfully updated sleep status on backend.");
+        }
+        else
+        {
+            Debug.LogError($"Error updating sleep status on backend: {request.error}");
         }
     }
 
@@ -790,4 +878,10 @@ public class PetBehaviour : MonoBehaviour
         yield return new WaitForSeconds(12f);
         FaucerAnimator.SetBool("flow", false);
     }
+}
+[System.Serializable]
+public class SleepPayload
+{
+    public int petId;
+    public bool isSleep;
 }

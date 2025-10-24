@@ -8,11 +8,11 @@ public class StatManager : MonoBehaviour
 
     public bool isSleeping = false;
 
+    public HorizontalPageScroller HPS;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-       
-
         // Start the stats update coroutine
         StartCoroutine(UpdateStatsEvery10Minutes());
     }
@@ -29,10 +29,23 @@ public class StatManager : MonoBehaviour
             string petKey = PlayerPrefKeys.PetPrefix;
             // Retrieve stats from PlayerPrefs
             statFill[0] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness); // playfulness
-            statFill[1] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger);      // hunger
-            statFill[2] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene);     // hygiene
-            statFill[3] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep);       // sleep
-            HorizontalPageScroller.Instance.UpdateButtonFill(statFill); // Perform the stat update
+            statFill[1] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger) - 5;      // hunger
+            statFill[2] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene) - 3;     // hygiene
+            bool isSleeping = PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping) == 1;
+            if (isSleeping)
+            {
+                statFill[3] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep) + 7; 
+            } else
+            {
+                statFill[3] = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep) - 7;
+            }
+
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetPlayfulness, statFill[0]);
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHunger, statFill[1]);
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHygiene, statFill[2]);
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetSleep, statFill[3]);
+            PlayerPrefs.Save();
+            HPS.UpdateButtonFill(statFill);
 
             // Wait for 10 minutes before updating again
             yield return new WaitForSeconds(600f); // 600 seconds = 10 minutes
@@ -55,6 +68,4 @@ public class StatManager : MonoBehaviour
         // Return the seconds until the next 10-minute mark
         return secondsUntilNextInterval;
     }
-
-    
 }

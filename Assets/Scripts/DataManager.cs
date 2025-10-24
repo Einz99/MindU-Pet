@@ -45,7 +45,7 @@ public class DataManager : MonoBehaviour
     {
         // Retrieve student_id and apiUrl from PlayerPrefs, with default values if not found
         studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 46);
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");  // Fallback URL if not found
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.2:3000");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
 
         Debug.Log($"Student ID: {studentId}, Primary API URL: {apiUrl}, Secondary API URL: {apiUrlSecondary}");
@@ -54,9 +54,12 @@ public class DataManager : MonoBehaviour
     // Coroutine to get pet data and handle the loading screen and scene transitions
     public IEnumerator HandlePetDataRequest()
     {
-        // Show loading screen
-        loadingScreen.SetActive(true);
-        CreationScreen.SetActive(false);
+        if(loadingScreen != null || CreationScreen != null)
+        {
+            // Show loading screen
+            loadingScreen.SetActive(true);
+            CreationScreen.SetActive(false);
+        }
     
         // Wait for the specified loading screen duration (5-10 seconds)
         yield return new WaitForSeconds(loadingScreenDuration);
@@ -80,17 +83,23 @@ public class DataManager : MonoBehaviour
                     yield break;
                 }
 
-                if (petsWrapper.shouldGoToAdoption)
+                if (loadingScreen != null && petsWrapper.shouldGoToAdoption)
                 {
-                    // No pets found, show the Pet Creation Screen
-                    loadingScreen.SetActive(false);
-                    CreationScreen.SetActive(true);
+                    if (loadingScreen != null || CreationScreen != null)
+                    {
+                        // No pets found, show the Pet Creation Screen
+                        loadingScreen.SetActive(false);
+                        CreationScreen.SetActive(true);
+                    }
                 }
                 else
                 {
                     // Pet data found, save it to PlayerPrefs and go to the pet scene
                     SavePetData(petsWrapper.pet);
-                    ShowPetScene();
+                    if (loadingScreen != null)
+                    {
+                        ShowPetScene();
+                    }
                 }
             }
             catch (Exception e)
@@ -103,9 +112,12 @@ public class DataManager : MonoBehaviour
             // If the status is 404, handle it here
             if (request.responseCode == 404)
             {
-                // Show the Pet Creation Screen
-                loadingScreen.SetActive(false);
-                CreationScreen.SetActive(true);
+                if (loadingScreen != null || CreationScreen != null)
+                {
+                    // Show the Pet Creation Screen
+                    loadingScreen.SetActive(false);
+                    CreationScreen.SetActive(true);
+                }
             }
             else
             {
@@ -152,7 +164,7 @@ public class DataManager : MonoBehaviour
     private void SavePetData(Pet pets)
     {
         string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
-
+        Debug.Log("Pet Data is Saved");
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetID, pets.id);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetStudentID, pets.student_id);
         PlayerPrefs.SetString(petKey + PlayerPrefKeys.PetName, pets.pet_name);

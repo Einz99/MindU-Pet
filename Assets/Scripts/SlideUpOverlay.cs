@@ -9,11 +9,13 @@ public class SlideUpOverlay : MonoBehaviour
     public GameObject overlayPanel;  // Assign the Panel/Overlay in the Inspector
     public GameObject slidePanel;
     public GameObject confirmPanel;
+    public GameObject loadingScreen;
+    public GameObject CreationScreen;
     public TMP_InputField Input;
     public float slideSpeed = 1f;    // Adjust the speed of the slide
     private Vector3 targetPosition;  // The target position where the panel will slide to
     private Vector3 originalPosition;  // The initial position of the panel
-    public GameObject animator;
+    public Animator animator;
     private int selected = 0;
 
     public TMP_Text PetName;
@@ -35,27 +37,9 @@ public class SlideUpOverlay : MonoBehaviour
     {
         overlayPanel.SetActive(true);
         selected = index + 1;
-
-        // Get the animator component
-        Animator animatorComponent = animator.GetComponent<Animator>();
-
+        
         // Set the appropriate Animator Controller based on the index
-        animatorComponent.runtimeAnimatorController = animatorControllers[index];
-
-        // Get the transform component of the object
-        Transform transformComponent = animator.GetComponent<Transform>();
-
-        // Scale based on the index (for index 1 and 2, scale up to 2200)
-        if (index == 1 || index == 2)
-        {
-            transformComponent.localScale = new Vector3(2500f, 2500f, 1f);  // Scale both x and y to 2200
-        }
-        else
-        {
-            // Reset scale for other indices (e.g., 0)
-            transformComponent.localScale = new Vector3(1300f, 1300f, 1f);  // Set scale to 1300
-        }
-        Debug.Log("Current Scale: " + transformComponent.localScale + "\nIndex: " + index);
+        animator.runtimeAnimatorController = animatorControllers[index];
         // Start the slide animation (you can also call this with a button event in Unity)
         StopAllCoroutines();  // Stop any previous slide coroutine
         StartCoroutine(SlideUpAnimation());
@@ -83,8 +67,6 @@ public class SlideUpOverlay : MonoBehaviour
     public void SlideDown()
     {
         selected = 0;
-        Transform transformComponent = animator.GetComponent<Transform>();
-        transformComponent.localScale = new Vector3(1300f, 1300f, 1f);
 
         StopAllCoroutines(); // Stop any previous slide coroutine
         StartCoroutine(SlideDownAnimation());
@@ -121,7 +103,7 @@ public class SlideUpOverlay : MonoBehaviour
             case 1: PetType.text = "Gray Cat"; break;
             case 2: PetType.text = "Calico"; break;
             case 3: PetType.text = "Tuxedo Cat"; break;
-            case 4: PetType.text = "Gray Cat"; break;
+            case 4: PetType.text = "Akita Dog"; break;
             case 5: PetType.text = "Gray Cat"; break;
             case 6: PetType.text = "Gray Cat"; break;
             default: break;
@@ -142,7 +124,8 @@ public class SlideUpOverlay : MonoBehaviour
 
         string petType = "";
 
-        switch (selected) {
+        switch (selected)
+        {
             case 1: petType = "cat_1"; break;
             case 2: petType = "cat_2"; break;
             case 3: petType = "cat_3"; break;
@@ -150,6 +133,10 @@ public class SlideUpOverlay : MonoBehaviour
             case 5: petType = "dog_2"; break;
             case 6: petType = "dog_3"; break;
         }
+        loadingScreen.SetActive(true);
+        CreationScreen.SetActive(false);
+        overlayPanel.SetActive(false);
+        confirmPanel.SetActive(false);
 
         // Start the coroutine to send the pet data to the server
         StartCoroutine(SendPetDataToServer(PetName.text, petType, studentId));
@@ -183,15 +170,6 @@ public class SlideUpOverlay : MonoBehaviour
             Debug.Log("Pet successfully created: " + request.downloadHandler.text);
 
             DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
-            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene); // Assuming bath is stored in hygiene
-            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
-
-            // Create an array with the stats
-            int[] stats = new int[] { playfulness, hunger, bath, sleep };
-            // Call UpdateButtonFill with the stats array
-            HorizontalPageScroller.Instance.UpdateButtonFill(stats);
         }
         else
         {
