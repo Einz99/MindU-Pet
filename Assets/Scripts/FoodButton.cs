@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
-using TMPro;  // For Coroutine
-using UnityEngine.Networking;  // For API calls
+using TMPro;
+using UnityEngine.Networking;
 
 public class FoodButton : MonoBehaviour
 {
@@ -10,45 +10,51 @@ public class FoodButton : MonoBehaviour
     public GameObject NotEnoughFoodPanel;
     public GameObject Foodtext;
     private InputAction clickAction;
-    private bool isClickable = true;  // Flag to check if the sprite is clickable
+    private InputAction positionAction; // Add this
+    private bool isClickable = true;
     private int foodquantity;
     private string apiUrl;
     private string apiUrlSecondary;
     private int petId;
+    public HorizontalPageScroller HPS;
 
     private void OnEnable()
     {
         // Initialize API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
-        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        Debug.Log($"From FoodButton:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Check if we are on mobile or desktop for input
         if (Application.isMobilePlatform)
         {
-            clickAction = new InputAction(type: InputActionType.Button, binding: "<Touchscreen>/primaryTouch");
+            clickAction = new InputAction(type: InputActionType.Button, binding: "<Touchscreen>/primaryTouch/press");
+            positionAction = new InputAction(type: InputActionType.Value, binding: "<Touchscreen>/primaryTouch/position");
             clickAction.performed += OnClick;
             clickAction.Enable();
+            positionAction.Enable();
         }
         else
         {
             clickAction = new InputAction(type: InputActionType.Button, binding: "<Mouse>/leftButton");
+            positionAction = new InputAction(type: InputActionType.Value, binding: "<Mouse>/position");
             clickAction.performed += OnClick;
             clickAction.Enable();
+            positionAction.Enable();
         }
     }
 
     private void OnDisable()
     {
-        // Disable the click action when this object is disabled
         clickAction.Disable();
+        positionAction.Disable();
     }
 
     private void OnClick(InputAction.CallbackContext context)
     {
-        // Check if the click is within the bounds of the sprite (e.g., the food button)
-        if (isClickable && IsSpriteClicked())  // Only proceed if it's clickable and sprite is clicked
+        if (isClickable && IsSpriteClicked())
         {
             foodquantity = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetFoodStack);
             
@@ -58,39 +64,25 @@ public class FoodButton : MonoBehaviour
                 return;
             }
 
-            // Trigger the feeding action (for UI interaction)
             petBehaviour.OnFeedButtonPressed();
             Foodtext.SetActive(false);
 
-            // Make the sprite unclickable for 10 seconds
             StartCoroutine(DisableClickForDuration(10f));
-
-            // Call the API to decrease food on the backend
             StartCoroutine(DecreaseFoodOnBackend());
         }
     }
 
     private bool IsSpriteClicked()
     {
-        // Use raycasting to detect if the sprite (Collider2D) is clicked
-        Vector2 inputPos;
-
-        if (Application.isMobilePlatform)
-        {
-            inputPos = Touchscreen.current.primaryTouch.position.ReadValue();
-        }
-        else
-        {
-            inputPos = Mouse.current.position.ReadValue();
-        }
-
+        // Use the position action to read input position
+        Vector2 inputPos = positionAction.ReadValue<Vector2>();
+        
         Vector3 worldTouchPos = Camera.main.ScreenToWorldPoint(inputPos);
         worldTouchPos.z = 0;
 
-        // Raycast to check if the touch or mouse is within the bounds of the sprite collider
         RaycastHit2D hit = Physics2D.Raycast(worldTouchPos, Vector2.zero);
 
-        if (hit.collider != null && hit.collider.gameObject == gameObject)  // Only proceed if the click is on the sprite
+        if (hit.collider != null && hit.collider.gameObject == gameObject)
         {
             return true;
         }
@@ -100,33 +92,46 @@ public class FoodButton : MonoBehaviour
 
     private IEnumerator DisableClickForDuration(float duration)
     {
-        isClickable = false;  // Disable clicking
+        isClickable = false;
 
-        // Wait for the specified duration
         yield return new WaitForSeconds(duration);
 
-        // Re-enable clicking and update food text
         isClickable = true;
         Foodtext.SetActive(true);
         foodquantity -= 1;
-        Foodtext.GetComponent<TMP_Text>().text = foodquantity.ToString() + "x";
+        int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
+        int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger) + 30;
+        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) - 2;  // Assuming bath is stored in hygiene
+        if (hunger >= 100)
+        {
+            hunger = 100;
+        }
+        if (bath <= 0)
+        {
+            bath = 0;
+        }
+        int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
+        PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
+        PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger, hunger);
         PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetFoodStack, foodquantity);
         PlayerPrefs.Save();
+        // Create an array with the updated stats
+        int[] stats = new int[] { playfulness, hunger, bath, sleep };
+    
+        // Call UpdateButtonFill with the stats array
+        HPS.UpdateButtonFill(stats);
+        Foodtext.GetComponent<TMP_Text>().text = foodquantity.ToString() + "x";
     }
 
     private IEnumerator DecreaseFoodOnBackend()
     {
-        // Prepare the request URL
         string url = $"{apiUrlSecondary}/pets/{petId}/foodeat";
 
-        // Create a PUT request to decrease the food on the backend
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT);
         request.SetRequestHeader("Content-Type", "application/json");
 
-        // Wait for the request to complete
         yield return request.SendWebRequest();
 
-        // Handle the response
         if (request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Food updated successfully on the backend.");

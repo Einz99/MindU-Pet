@@ -32,9 +32,11 @@ public class ToysMenu : MonoBehaviour
     private void Start() {
         string petKey = PlayerPrefKeys.PetPrefix;
         // Retrieve the API URL and pet ID from PlayerPrefs
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
-        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        
+        Debug.Log($"From ToysMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Start the coroutine to get toys data from the API
         StartCoroutine(GetToysData());

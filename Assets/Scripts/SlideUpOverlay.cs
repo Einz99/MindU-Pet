@@ -153,8 +153,8 @@ public class SlideUpOverlay : MonoBehaviour
             student_id = studentId
         };
 
-        string insertAPI = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, "http://192.168.1.5:3000/api") + "/pets";
-        Debug.Log(insertAPI);
+        string insertAPI = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary) + "/pets";
+        Debug.Log($"InsertAPI From SlideUP: {insertAPI}");
         // Convert the data to JSON
         string jsonData = JsonUtility.ToJson(petData);
         UnityWebRequest request = new UnityWebRequest(insertAPI, "POST");

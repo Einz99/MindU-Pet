@@ -165,7 +165,7 @@ public class PetBehaviour : MonoBehaviour
         transform.position = new Vector3(0f, -2.25f, 0f);
 
         // Set the initial scale of the pet to 0.33 (idle state scale)
-        transform.localScale = new Vector3(0.33f, 0.33f, 1f);
+        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
 
         // Set initial state to idle
         animator.SetInteger("sleepType", 0); // Idle state initially
@@ -230,7 +230,7 @@ public class PetBehaviour : MonoBehaviour
         StartCoroutine(idleAccessories());
 
         // Set the idle scale to 0.33 (fixed value for idle state)
-        transform.localScale = new Vector3(0.33f, 0.33f, 1f);
+        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
     }
 
     private IEnumerator idleAccessories()
@@ -270,11 +270,6 @@ public class PetBehaviour : MonoBehaviour
                 continue;
             }
             else if (goLeft && ((isCollarOn && i == 4) || (isGlassesOn && i == 6) || (isHatOn && i == 8)))
-            {
-                accessoryObjects[i].SetActive(true);
-                continue;
-            }
-            else if (i == 0 && isHatOn)
             {
                 accessoryObjects[i].SetActive(true);
                 continue;
@@ -376,7 +371,7 @@ public class PetBehaviour : MonoBehaviour
         float normalizedY = Mathf.InverseLerp(-2.55f, -1.88f, currentY);
 
         // Calculate the new scale based on the normalized Y value
-        float idleScale = Mathf.Lerp(0.33f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
+        float idleScale = Mathf.Lerp(0.4f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
         float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY); // Movement scale range from 0.5 to 0.2
 
         // Apply the new scale to the pet
@@ -509,25 +504,8 @@ public class PetBehaviour : MonoBehaviour
         if (collision.gameObject.CompareTag("soap"))
         {
 
-            for (int i = 0; i < accessoryObjects.Length; i++)
-            {
-                if (i > 2)
-                {
-                    accessoryObjects[i].SetActive(false);
-                    continue;
-                }
-                if (isHatOn && i == 0)
-                {
-                    accessoryObjects[i].SetActive(true);
-                }
-                if (isGlassesOn && i == 1)
-                {
-                    accessoryObjects[i].SetActive(true);
-                }
-                if (isCollarOn && i == 2)
-                {
-                    accessoryObjects[i].SetActive(true);
-                }
+            foreach (var acc in accessoryObjects) {
+                acc.SetActive(false);
             }
             foreach (var button in buttonsToDisable)
             {
@@ -662,23 +640,23 @@ public class PetBehaviour : MonoBehaviour
         int finished_sq = PlayerPrefs.GetInt(soap_quantity) - 1;
         SoapQuantityText.text = finished_sq.ToString() + "x";  // Update the UI with the new soap quantity
         PlayerPrefs.SetInt(soap_quantity, finished_sq);
-        PlayerPrefs.Save();  // Save the updated soap quantity
-    
+          // Save the updated soap quantity
+
         // Call the API to update soap usage on the backend
         yield return StartCoroutine(UpdateSoapUsageOnBackend());
-    
-        // Call the DataManager API to sync pet data after the shower routine
-        DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-    
+        
         // Retrieve and update stats
         int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
         int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
+        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) + 10;  // Assuming bath is stored in hygiene
+        if (bath >= 100) {
+            bath = 100;
+        }
         int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
-    
+        PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
         // Create an array with the updated stats
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
-    
+        PlayerPrefs.Save();
         // Call UpdateButtonFill with the stats array
         HPS.UpdateButtonFill(stats);
         ShowerButton.SetActive(false);
@@ -691,8 +669,9 @@ public class PetBehaviour : MonoBehaviour
         // Retrieve API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
-        string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        Debug.Log($"From PetBehavior:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Construct the API URL for soap usage
         string url = $"{apiUrlSecondary}/pets/{petId}/soapuse";
@@ -707,8 +686,14 @@ public class PetBehaviour : MonoBehaviour
             default: soap_type = "soap_1"; break;
         }
     
-        // Create a JSON payload for the API call
-        string jsonData = JsonUtility.ToJson(new { soap_type });
+        // Create payload object using serializable class
+        SoapUsagePayload payload = new SoapUsagePayload
+        {
+            soap_type = soap_type
+        };
+    
+        // Convert to JSON
+        string jsonData = JsonUtility.ToJson(payload);
     
         // Create a UnityWebRequest to make a PUT request
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -836,6 +821,7 @@ public class PetBehaviour : MonoBehaviour
 
         // Construct the URL to your backend API (Make sure the URL is correct)
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        Debug.Log($"From bathMenu:\nRootAPI: {apiUrl}\nPetID: {petID}");
         string url = $"{apiUrl}/toggle-pet-sleep";  // Change this to your actual API endpoint
 
         // Create the JSON payload
@@ -884,4 +870,10 @@ public class SleepPayload
 {
     public int petId;
     public bool isSleep;
+}
+
+[System.Serializable]
+public class SoapUsagePayload
+{
+    public string soap_type;
 }

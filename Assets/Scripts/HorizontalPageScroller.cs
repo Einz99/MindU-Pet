@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class HorizontalPageScroller : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class HorizontalPageScroller : MonoBehaviour
     public float pageWidth = 1920f; // Width of each page (adjust to your screen/canvas size)
     public float scrollDuration = 1f; // Time to scroll between pages
     public AnimationCurve scrollCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    public GameObject DailyReward;
 
     [Header("Page Settings")]
     public int totalPages = 4; // Number of sprite pages
@@ -46,8 +48,12 @@ public class HorizontalPageScroller : MonoBehaviour
     [Header("Stats")]
     public ButtonFill[] ButtonFills = new ButtonFill[4];
 
+    private const string LAST_DAILY_REWARD_KEY = "LastDailyRewardDate";
+    
     void Start()
     {
+        CheckAndShowDailyRewards();
+
         isCurtainOpen = PlayerPrefs.GetInt(PlayerPrefKeys.isCurtainOpen, 0) == 1;
         petBehaviour = petObject.GetComponent<PetBehaviour>();
         // Set initial position
@@ -66,6 +72,35 @@ public class HorizontalPageScroller : MonoBehaviour
         isCollarOn = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetNeck, 0) > 0;
         isGlassesOn = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetEyes, 0) > 0;
 
+    }
+
+    private void CheckAndShowDailyRewards()
+    {
+        // Get today's date as a string (format: yyyy-MM-dd)
+        string todayDate = DateTime.Now.ToString("yyyy-MM-dd");
+        
+        // Get the last reward date from PlayerPrefs
+        string lastRewardDate = PlayerPrefs.GetString(LAST_DAILY_REWARD_KEY, "");
+
+        Debug.Log($"🎁 Today: {todayDate}, Last Reward: {lastRewardDate}");
+
+        // If no date exists or it's not today, show daily rewards
+        if (string.IsNullOrEmpty(lastRewardDate) || lastRewardDate != todayDate)
+        {
+            Debug.Log("✨ Showing Daily Rewards!");
+            if (DailyReward != null)
+            {
+                DailyReward.SetActive(true);
+            }
+        }
+        else
+        {
+            Debug.Log("⏭️ Daily reward already claimed today");
+            if (DailyReward != null)
+            {
+                DailyReward.SetActive(false);
+            }
+        }
     }
 
     private void ScrollToPage(int pageIndex)
@@ -243,11 +278,6 @@ public class HorizontalPageScroller : MonoBehaviour
                 continue;
             }
             else if (goLeft && ((isCollarOn && i == 4) || (isGlassesOn && i == 6) || (isHatOn && i == 8)))
-            {
-                accessoryObjects[i].SetActive(true);
-                continue;
-            }
-            else if (i == 0 && isHatOn)
             {
                 accessoryObjects[i].SetActive(true);
                 continue;

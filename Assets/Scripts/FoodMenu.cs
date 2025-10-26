@@ -98,8 +98,9 @@ public class FoodMenu : MonoBehaviour
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetFoodStack, currentFoodStack + increment);
 
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
-        string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        Debug.Log($"From FoodMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Construct the API URL for updating food
         string url = $"{apiUrlSecondary}/pets/{petId}/food";
@@ -139,7 +140,7 @@ public class FoodMenu : MonoBehaviour
             // Revert the local changes if the backend update fails
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins); // Restore coins
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetFoodStack, currentFoodStack); // Restore food stack
-                PlayerPrefs.Save();
+            PlayerPrefs.Save();
             ConfirmPanel.SetActive(false);
         }
     }
