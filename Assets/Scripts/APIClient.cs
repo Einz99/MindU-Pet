@@ -9,8 +9,10 @@ public class APIClient : MonoBehaviour
     void Start()
     {
         // Retrieve the API URL from PlayerPrefs and append "/test"
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
-        
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+
+        Debug.Log($"From api_client:\nRootAPI: {apiUrl}");
+
         string apiTest = apiUrl;
         // Ensure there's no trailing slash before appending "/test"
         if (!apiTest.EndsWith("/"))

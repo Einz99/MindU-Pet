@@ -1,36 +1,151 @@
 using System;
-using Unity.VisualScripting;
+using System.Collections;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
 
 public class UnityDataReceiver : MonoBehaviour
 {
-    // This method will receive data from React Native and store it using DataManager
-
+    [Header("Fallback Configuration")]
+    [SerializeField] private float timeout = 5f; // Wait 5 seconds for React Native data
+    [SerializeField] private int fallbackStudentId = 622;
+    [SerializeField] private int port = 3000;
+    
+    [Header("PC Server IP (for Android builds)")]
+    [SerializeField] 
+    private string pcServerIP = "10.186.218.142"; // Set your PC's IP here
+    private string pcServerIP2 = "192.168.1.2";
+    
+    private bool dataReceived = false;
+    private string fallbackData;
+    
     void Start()
     {
-        UnityDataReceiver receiver = FindFirstObjectByType<UnityDataReceiver>(); // Assuming only one instance of UnityDataReceiver in the scene
-        if (receiver != null)
+        // Generate fallback data based on platform
+        string serverIP = GetServerIP();
+        fallbackData = $"{fallbackStudentId},http://{serverIP}:{port}";
+        Debug.Log($"🌐 Fallback data generated: {fallbackData}");
+        Debug.Log($"📱 Platform: {Application.platform}");
+        
+        // Wait for DataManager to be ready, then handle data
+        StartCoroutine(WaitAndHandleData());
+    }
+    
+    private string GetServerIP()
+    {
+        // If running on Android, use the PC server IP
+        if (Application.platform == RuntimePlatform.Android)
         {
-            // Simulate receiving data from React Native
-            receiver.ReceiveDataFromReactNative("622,http://10.186.218.142:3000");
+            Debug.Log($"📱 Android platform detected, using PC server IP: {pcServerIP}");
+            return pcServerIP;
+        }
+        
+        // If running on PC (Editor or Standalone), use local IP
+        string localIP = GetLocalIPAddress();
+        Debug.Log($"💻 PC platform detected, using local IP: {localIP}");
+        return localIP;
+    }
+    
+    private string GetLocalIPAddress()
+    {
+        try
+        {
+            // Get all network interfaces
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            
+            // Find the first IPv4 address that is not loopback
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                {
+                    Debug.Log($"📍 Found local IPv4: {ip}");
+                    return ip.ToString();
+                }
+            }
+            
+            Debug.LogWarning("⚠️ No IPv4 address found, using localhost");
+            return "127.0.0.1";
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"❌ Error getting local IP: {ex.Message}");
+            return "127.0.0.1";
         }
     }
-    public void ReceiveDataFromReactNative(string data)
+    
+    private IEnumerator WaitAndHandleData()
     {
-        // Split the received data (student_id, API_URL, API_URL_Secondary) by the comma
-        string[] dataArray = data.Split(',');
-
-        // Check if we have the correct number of parameters
-        if (dataArray.Length == 2)
+        float elapsed = 0f;
+        
+        // Wait until DataManager instance exists
+        while (DataManager.Instance == null)
         {
-            int studentId = int.Parse(dataArray[0]);  // First value: student_id
-            string apiUrl = dataArray[1];     // Second value: primary API_URL
-            // Use DataManager to save the received data
-            DataManager.Instance.SetData(studentId, apiUrl);  // Save all three data points
+            yield return null;
+            elapsed += Time.deltaTime;
+            
+            if (elapsed >= 1f)
+            {
+                Debug.LogWarning("⏳ Still waiting for DataManager...");
+                elapsed = 0f;
+            }
+        }
+        
+        Debug.Log("✅ DataManager found!");
+        
+        // Wait for timeout period to see if React Native sends data
+        float waitTime = 0f;
+        while (waitTime < timeout && !dataReceived)
+        {
+            yield return null;
+            waitTime += Time.deltaTime;
+        }
+        
+        // If no data received from React Native, use fallback
+        if (!dataReceived)
+        {
+            Debug.LogWarning($"⏰ Timeout reached ({timeout}s). Using fallback data.");
+            ReceiveDataFromReactNative(fallbackData);
         }
         else
         {
-            Debug.LogError("Received data is in an incorrect format. Expected 2 values.");
+            Debug.Log("✅ Data successfully received from React Native!");
+        }
+    }
+    
+    public void ReceiveDataFromReactNative(string data)
+    {
+        if (dataReceived)
+        {
+            Debug.LogWarning("⚠️ Data already received, ignoring duplicate call.");
+            return;
+        }
+        
+        dataReceived = true;
+        Debug.Log($"📥 Received data: {data}");
+        
+        string[] dataArray = data.Split(',');
+
+        if (dataArray.Length == 2)
+        {
+            int studentId = int.Parse(dataArray[0].Trim());
+            string apiUrl = dataArray[1].Trim();
+            
+            Debug.Log($"🔧 Parsed - Student ID: {studentId}, API: {apiUrl}");
+            
+            // Make sure DataManager exists
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.SetData(studentId, apiUrl);
+            }
+            else
+            {
+                Debug.LogError("❌ DataManager instance not found!");
+            }
+        }
+        else
+        {
+            Debug.LogError("❌ Received data is in incorrect format. Expected 2 values.");
         }
     }
 }

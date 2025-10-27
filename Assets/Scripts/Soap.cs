@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class Soap : MonoBehaviour
 {
     private InputAction clickAction;
+    private InputAction positionAction; // Add this for position tracking
     private bool isDragging = false;
     private Vector3 offset;
     private Rigidbody2D rb2d;
@@ -16,8 +17,8 @@ public class Soap : MonoBehaviour
     private void Awake()
     {
         rb2d = GetComponent<Rigidbody2D>();
-        transform.position = originalPosition;  // Set the original position
-        rb2d.bodyType = RigidbodyType2D.Kinematic;  // Start as kinematic
+        transform.position = originalPosition;
+        rb2d.bodyType = RigidbodyType2D.Kinematic;
 
         EnablingActions();
     }
@@ -25,12 +26,13 @@ public class Soap : MonoBehaviour
     private void OnDisable()
     {
         clickAction.Disable();
+        positionAction.Disable();
     }
 
     private void OnEnable()
     {
         EnablingActions();
-        string petkey = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix);
+        string petkey = PlayerPrefKeys.PetPrefix;
         int soap_type = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.soap_type);
         int soap_quantity = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.soap_quantity);
 
@@ -42,34 +44,27 @@ public class Soap : MonoBehaviour
     {
         if (Application.isMobilePlatform)
         {
-            clickAction = new InputAction(type: InputActionType.Button, binding: "<Touchscreen>/primaryTouch");
+            clickAction = new InputAction(type: InputActionType.Button, binding: "<Touchscreen>/primaryTouch/press");
+            positionAction = new InputAction(type: InputActionType.Value, binding: "<Touchscreen>/primaryTouch/position");
             clickAction.performed += OnTouchBegan;
             clickAction.canceled += OnTouchEnded;
             clickAction.Enable();
+            positionAction.Enable();
         }
         else
         {
             clickAction = new InputAction(type: InputActionType.Button, binding: "<Mouse>/leftButton");
+            positionAction = new InputAction(type: InputActionType.Value, binding: "<Mouse>/position");
             clickAction.performed += OnTouchBegan;
             clickAction.canceled += OnTouchEnded;
             clickAction.Enable();
+            positionAction.Enable();
         }
     }
-    
 
     private void OnTouchBegan(InputAction.CallbackContext context)
     {
-        Vector2 inputPos;
-
-        if (Application.isMobilePlatform)
-        {
-            inputPos = Touchscreen.current.primaryTouch.position.ReadValue();
-        }
-        else
-        {
-            inputPos = Mouse.current.position.ReadValue();
-        }
-
+        Vector2 inputPos = positionAction.ReadValue<Vector2>();
         Vector3 worldTouchPos = Camera.main.ScreenToWorldPoint(inputPos);
         worldTouchPos.z = 0;
 
@@ -79,8 +74,6 @@ public class Soap : MonoBehaviour
         {
             isDragging = true;
             offset = gameObject.transform.position - worldTouchPos;
-            
-            // Change Rigidbody2D to Dynamic for collisions
             rb2d.bodyType = RigidbodyType2D.Dynamic;
         }
     }
@@ -88,28 +81,19 @@ public class Soap : MonoBehaviour
     private void OnTouchEnded(InputAction.CallbackContext context)
     {
         isDragging = false;
-
-        // Change Rigidbody2D back to Kinematic after dragging is done
         rb2d.bodyType = RigidbodyType2D.Kinematic;
-
-        // Reset the position to the original one and log it
         transform.position = originalPosition; 
-        transform.rotation = Quaternion.identity; // Reset rotation
+        transform.rotation = Quaternion.identity;
     }
 
     void Update()
     {   
         if (isDragging)
         {
-            Vector2 inputPosition = Application.isMobilePlatform
-                ? Touchscreen.current.primaryTouch.position.ReadValue()
-                : Mouse.current.position.ReadValue();
-
+            Vector2 inputPosition = positionAction.ReadValue<Vector2>();
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(inputPosition);
             worldPos.z = 0;
-
-            // Manually update the position of the soap object while dragging
-            transform.position = worldPos + offset; // Keep the offset to follow the touch or mouse position
+            transform.position = worldPos + offset;
         }
     }
 }

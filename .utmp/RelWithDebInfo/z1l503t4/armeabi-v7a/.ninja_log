@@ -1,0 +1,12 @@
+# ninja log v5
+133	526	7832622497149213	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	7711241a220766b8
+529	1091	7832622502317291	C:/Mind-U/MindU-Pet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/z1l503t4/obj/armeabi-v7a/libswappywrapper.so	181baf36cb6872bd
+46	3117	7832622522930697	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	12b688ce45b742b2
+32	3136	7832622523091541	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	f55a8c36e786f657
+86	3167	7832622523585245	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	18c7f210f3cf6f25
+115	3193	7832622523733734	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	203203ed0298f736
+1	3288	7832622524794504	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	97fdfc6d05ab1211
+99	3468	7832622526622925	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	3e3dd07fba09ac8e
+68	3665	7832622528568926	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	84966657b9f0e48b
+15	3810	7832622530003906	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	9ee4609fba3458fd
+3810	4019	7832622532125215	C:/Mind-U/MindU-Pet/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/z1l503t4/obj/armeabi-v7a/libgame.so	e2e2f37de0ef1550

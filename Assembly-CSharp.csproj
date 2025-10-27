@@ -58,6 +58,7 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_ExampleScript_01.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
+    <Compile Include="Assets\Scripts\BGBasedOnTime.cs" />
     <Compile Include="Assets\Scripts\HorizontalPageScroller.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexJitter.cs" />
     <Compile Include="Assets\Scripts\HatsMenu.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Assets\Scripts\CollarsMenu.cs" />
     <Compile Include="Assets\Scripts\FoodButton.cs" />
     <Compile Include="Assets\Scripts\InitialSoap.cs" />
+    <Compile Include="Assets\Scripts\DailyRewardMenu.cs" />
     <Compile Include="Assets\Scripts\APIClient.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />

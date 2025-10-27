@@ -2,6 +2,9 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System;
 
 public class DataManager : MonoBehaviour
@@ -13,9 +16,6 @@ public class DataManager : MonoBehaviour
     public string apiUrl; // Primary API URL
     public string apiUrlSecondary; // Secondary API URL (appended with "/api")
 
-    // Define the URL for your pets endpoint
-    private string petsEndpoint => apiUrlSecondary + "/pets/" + studentId;
-
     // Loading Screen UI (you can assign this in the Unity Inspector)
     public GameObject loadingScreen;
     public GameObject CreationScreen;
@@ -23,21 +23,53 @@ public class DataManager : MonoBehaviour
 
     private void Awake()
     {
-        // Ensure only one instance of DataManager exists
+        ServicePointManager.ServerCertificateValidationCallback =
+            MyRemoteCertificateValidationCallback;
+
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);  // Keep this object between scene loads
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject);  // Destroy any duplicate instance of the DataManager
+            Destroy(gameObject);
+            return; // Don't continue if this is a duplicate
         }
 
-        // On start, load the data from PlayerPrefs
+        // Load data from PlayerPrefs
         LoadData();
-        // Call the function to get pet data and handle scenes after showing loading screen
-        StartCoroutine(HandlePetDataRequest());
+
+        // ONLY start fetching if we have valid data
+        if (studentId > 0 && !string.IsNullOrEmpty(apiUrlSecondary))
+        {
+            StartCoroutine(HandlePetDataRequest());
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Waiting for data from UnityDataReceiver...");
+        }
+    }
+    public void StartDataFetch()
+    {
+        if (studentId > 0 && !string.IsNullOrEmpty(apiUrlSecondary))
+        {
+            Debug.Log("✅ Data received! Starting pet data fetch...");
+            StartCoroutine(HandlePetDataRequest());
+        }
+        else
+        {
+            Debug.LogError("❌ Cannot start fetch - missing student ID or API URL");
+        }
+    }
+    
+    private bool MyRemoteCertificateValidationCallback(
+        System.Object sender,
+        X509Certificate certificate,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        return true; // Accept all certificates
     }
 
     // Method to load data from PlayerPrefs
@@ -45,12 +77,9 @@ public class DataManager : MonoBehaviour
     {
         // Retrieve student_id and apiUrl from PlayerPrefs, with default values if not found
         studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 46);
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://10.186.218.142:3000");  // Fallback URL if not found
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.2:3000");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
-        PlayerPrefs.SetString(PlayerPrefKeys.API_URL, "http://10.186.218.142:3000");
-        PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
-        PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, 46);
-        PlayerPrefs.Save();
+
         Debug.Log($"Student ID: {studentId}, Primary API URL: {apiUrl}, Secondary API URL: {apiUrlSecondary}");
     }
 
@@ -63,17 +92,35 @@ public class DataManager : MonoBehaviour
             loadingScreen.SetActive(true);
             CreationScreen.SetActive(false);
         }
-    
+        
+        string petsEndpoint = apiUrlSecondary + "/pets/" + studentId;
+        
+        Debug.Log("=== API REQUEST DEBUG ===");
+        Debug.Log("Full Endpoint: " + petsEndpoint);
+        Debug.Log("Expected: http://192.168.1.2:3000/api/pets/46");
+        
         // Wait for the specified loading screen duration (5-10 seconds)
         yield return new WaitForSeconds(loadingScreenDuration);
 
         UnityWebRequest request = UnityWebRequest.Get(petsEndpoint);
+        
+        // Add certificate handler to bypass SSL errors
+        request.certificateHandler = new AcceptAllCertificates();
+        request.timeout = 10;
+        
+        Debug.Log("Sending request to: " + petsEndpoint);
+        
         yield return request.SendWebRequest(); // Wait for the request to finish
+        
+        Debug.Log("Request completed!");
+        Debug.Log("Result: " + request.result);
+        Debug.Log("Response Code: " + request.responseCode);
         
         if (request.result == UnityWebRequest.Result.Success)
         {
             // Parse the JSON response
             string responseText = request.downloadHandler.text;
+            Debug.Log("SUCCESS! Response: " + responseText);
 
             try
             {
@@ -83,11 +130,14 @@ public class DataManager : MonoBehaviour
                 if (petsWrapper == null)
                 {
                     Debug.LogError("Failed to parse pet data.");
+                    request.certificateHandler.Dispose();
+                    request.Dispose();
                     yield break;
                 }
 
                 if (loadingScreen != null && petsWrapper.shouldGoToAdoption)
                 {
+                    Debug.Log("No pet found - going to adoption");
                     if (loadingScreen != null || CreationScreen != null)
                     {
                         // No pets found, show the Pet Creation Screen
@@ -97,6 +147,7 @@ public class DataManager : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("Pet found! Saving data and loading scene...");
                     // Pet data found, save it to PlayerPrefs and go to the pet scene
                     SavePetData(petsWrapper.pet);
                     if (loadingScreen != null)
@@ -112,9 +163,15 @@ public class DataManager : MonoBehaviour
         }
         else
         {
+            Debug.LogError("=== REQUEST FAILED ===");
+            Debug.LogError("Error: " + request.error);
+            Debug.LogError("Response Code: " + request.responseCode);
+            Debug.LogError("URL: " + petsEndpoint);
+            
             // If the status is 404, handle it here
             if (request.responseCode == 404)
             {
+                Debug.Log("404 - Showing creation screen");
                 if (loadingScreen != null || CreationScreen != null)
                 {
                     // Show the Pet Creation Screen
@@ -124,9 +181,13 @@ public class DataManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Error fetching pet data: " + request.error);
+                Debug.LogError("Network error fetching pet data: " + request.error);
             }
         }
+        
+        // Clean up
+        request.certificateHandler.Dispose();
+        request.Dispose();
     }
 
 
@@ -199,19 +260,42 @@ public class DataManager : MonoBehaviour
     // Method to set the data in PlayerPrefs
     public void SetData(int studentId, string apiUrl)
     {
+        // Trim all whitespace
+        apiUrl = apiUrl.Trim();
+        
         this.studentId = studentId;
         this.apiUrl = apiUrl;
-
+    
         // Save to PlayerPrefs
-        PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, studentId);  // Save student ID
-        PlayerPrefs.SetString(PlayerPrefKeys.API_URL, apiUrl);  // Save primary API URL
+        PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, studentId);
+        PlayerPrefs.SetString(PlayerPrefKeys.API_URL, apiUrl);
+        
         string secondaryAPI = apiUrl;
         if (!secondaryAPI.EndsWith("/"))
         {
             secondaryAPI += "/";
         }
-        PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, secondaryAPI + "api");  // Save secondary API URL
-        PlayerPrefs.Save();  // Save data immediately
+        
+        this.apiUrlSecondary = secondaryAPI + "api"; // Update instance variable
+        PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, this.apiUrlSecondary);
+        PlayerPrefs.Save();
+        
+        Debug.Log($"✅ Data saved successfully!");
+        Debug.Log($"API URL: '{apiUrl}'");
+        Debug.Log($"Secondary: '{this.apiUrlSecondary}'");
+        Debug.Log($"Student ID: {studentId}");
+        
+        // NOW trigger the data fetch
+        StartDataFetch();
+    }
+}
+
+// IMPORTANT: Add this class at the bottom of the file
+public class AcceptAllCertificates : CertificateHandler
+{
+    protected override bool ValidateCertificate(byte[] certificateData)
+    {
+        return true; // Accept all certificates
     }
 }
 
@@ -244,4 +328,3 @@ public class Pet
     public int soap_type;
     public int soap_quantity;
 }
-

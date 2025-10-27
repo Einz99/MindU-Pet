@@ -30,9 +30,10 @@ public class HatsMenu : MonoBehaviour
         
         // Retrieve API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.5:3000");
-        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+        Debug.Log($"From bathMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Call the method to fetch accessories
         StartCoroutine(GetAccessories());

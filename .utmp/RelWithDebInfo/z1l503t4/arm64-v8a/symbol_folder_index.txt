@@ -1,0 +1,1 @@
+C:\Mind-U\MindU-Pet\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\z1l503t4\obj\arm64-v8a

@@ -10,3 +10,5 @@ Builds/
 .userprefs
 .DS_Store
 Thumbs.db
+Logs/
+*.log
