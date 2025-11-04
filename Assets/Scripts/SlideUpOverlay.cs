@@ -100,10 +100,10 @@ public class SlideUpOverlay : MonoBehaviour
         // Set pet type based on the selected index
         switch (selected)
         {
-            case 1: PetType.text = "Gray Cat"; break;
+            case 1: PetType.text = "GRAY CAT"; break;
             case 2: PetType.text = "Calico"; break;
             case 3: PetType.text = "Tuxedo Cat"; break;
-            case 4: PetType.text = "Akita Dog"; break;
+            case 4: PetType.text = "AKITA DOG"; break;
             case 5: PetType.text = "Gray Cat"; break;
             case 6: PetType.text = "Gray Cat"; break;
             default: break;

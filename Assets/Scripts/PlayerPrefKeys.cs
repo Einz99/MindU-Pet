@@ -5,6 +5,8 @@ public static class PlayerPrefKeys
     public const string StudentID = "StudentID";
     public const string API_URL_Secondary = "API_URL_Secondary";
 
+    public const string IsWatchTutorial = "IsWatchTutorial";
+
     // Pet-related keys
     public const string PetPrefix = "Pet_"; // Prefix to identify pet keys
     public const string PetID = "id";
@@ -23,6 +25,8 @@ public static class PlayerPrefKeys
     public const string PetSleep = "sleep";
     public const string PetCreatedAt = "created_at";
     public const string PetUpdatedAt = "updated_at";
+
+    // Mostly this ones
     public const string isCurtainOpen = "isCurtainOpen";
     public const string isSleeping = "isSleeping";
     public const string soap_type = "soap_type";

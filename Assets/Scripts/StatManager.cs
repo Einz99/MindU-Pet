@@ -57,12 +57,11 @@ public class StatManager : MonoBehaviour
                 statFill[i] = Mathf.Clamp(statFill[i], 0, 100);
             }
 
-            // Save clamped values
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetPlayfulness, statFill[0]);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHunger, statFill[1]);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHygiene, statFill[2]);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetSleep, statFill[3]);
-            PlayerPrefs.Save();
+            // ✅ Save clamped values using StorageBridge
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetPlayfulness, statFill[0]);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHunger, statFill[1]);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHygiene, statFill[2]);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetSleep, statFill[3]);
 
             // ✅ Add null check before calling
             if (HPS != null)

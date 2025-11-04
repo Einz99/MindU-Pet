@@ -45,7 +45,7 @@ public class MiniGame : MonoBehaviour
 
     // NEW: Time-based cooldown tracking
     private float cooldownEndTime = 0f;
-    private float cooldownDuration = 10f;
+    private float cooldownDuration = 0f;
 
     private int[] additionalIncrement = new int[] { 8, 10, 12, 15, 15, 20 };
 
@@ -60,7 +60,7 @@ public class MiniGame : MonoBehaviour
         {
             if (isIncreasing)
             {
-                GameBar.value += Time.deltaTime * 125;
+                GameBar.value += Time.deltaTime * 60;
                 if (GameBar.value >= 100)
                 {
                     isIncreasing = false;
@@ -68,7 +68,7 @@ public class MiniGame : MonoBehaviour
             }
             else
             {
-                GameBar.value -= Time.deltaTime * 125;
+                GameBar.value -= Time.deltaTime * 60;
                 if (GameBar.value <= 0)
                 {
                     isIncreasing = true;
@@ -135,7 +135,7 @@ public class MiniGame : MonoBehaviour
 
         TopOfScreen.SetActive(false);
         GameBG.SetActive(true);
-        PetSpriteRenderer.sortingOrder = 4;
+        PetSpriteRenderer.sortingOrder = 3;
         petBehaviour.DisableBehavior();
         StartCoroutine(petBehaviour.WalkToInitialPosition());
         StartCoroutine(waitPetToPosition());
@@ -159,9 +159,7 @@ public class MiniGame : MonoBehaviour
 
         isInMiniGame = true;
 
-        foreach (var toy in Toys) {
-            toy.SetActive(false);
-        }
+        Toys[toyIndex].SetActive(false);
         index = toyIndex;
         Hand.transform.localPosition = new Vector3(0, -4.5f, 0);
         BalltoPlay.SetActive(false);
@@ -317,9 +315,7 @@ public class MiniGame : MonoBehaviour
 
         HandAnimation.ResetTrigger("GoToss");
         Hand.SetActive(false);
-        foreach (var toy in Toys) {
-            toy.SetActive(true);
-        }
+        Toys[index].SetActive(true);
         ButtonForTap.SetActive(false);
         tappable = true;
         GameBG.SetActive(false);
@@ -402,12 +398,12 @@ public class MiniGame : MonoBehaviour
             string responseText = request.downloadHandler.text;
             PetStatsResponse statsResponse = JsonUtility.FromJson<PetStatsResponse>(responseText);
 
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetPlayfulness, statsResponse.playfulness);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHunger, statsResponse.hunger);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHygiene, statsResponse.hygiene);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetSleep, statsResponse.sleep);
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, statsResponse.coins);
-            PlayerPrefs.Save();
+            // ✅ USE StorageBridge INSTEAD
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetPlayfulness, statsResponse.playfulness);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHunger, statsResponse.hunger);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHygiene, statsResponse.hygiene);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetSleep, statsResponse.sleep);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, statsResponse.coins);
 
             Debug.Log($"Updated Stats - Playfulness: {statsResponse.playfulness}, Hunger: {statsResponse.hunger}, Sleep: {statsResponse.sleep}, Hygiene: {statsResponse.hygiene}, Coins: {statsResponse.coins}");
 

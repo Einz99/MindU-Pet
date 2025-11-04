@@ -10,7 +10,6 @@ public class Soap : MonoBehaviour
     private Vector3 offset;
     private Rigidbody2D rb2d;
     public Sprite[] Soaps = new Sprite[4];
-    public TMP_Text Soapquantity;
 
     private Vector3 originalPosition = new Vector3(-1.65f, 2.9f, 0);
 
@@ -37,7 +36,6 @@ public class Soap : MonoBehaviour
         int soap_quantity = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.soap_quantity);
 
         GetComponent<SpriteRenderer>().sprite = Soaps[soap_type];
-        Soapquantity.text = soap_quantity + "x";
     }
     
     private void EnablingActions()

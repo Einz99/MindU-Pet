@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class UnityDataReceiver : MonoBehaviour
@@ -20,16 +21,35 @@ public class UnityDataReceiver : MonoBehaviour
     private bool dataReceived = false;
     private string fallbackData;
     
+    // Import JavaScript functions for WebGL (only used in WebGL builds)
+    #if UNITY_WEBGL && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern string GetURLParameter(string param);
+    
+    [DllImport("__Internal")]
+    private static extern string GetOriginURL();
+    #endif
+    
     void Start()
     {
-        // Generate fallback data based on platform
-        string serverIP = GetServerIP();
-        fallbackData = $"{fallbackStudentId},http://{serverIP}:{port}";
-        Debug.Log($"🌐 Fallback data generated: {fallbackData}");
         Debug.Log($"📱 Platform: {Application.platform}");
         
-        // Wait for DataManager to be ready, then handle data
-        StartCoroutine(WaitAndHandleData());
+        // Check if running in WebGL
+        if (Application.platform == RuntimePlatform.WebGLPlayer)
+        {
+            Debug.Log("🌐 WebGL platform detected - using URL parameters");
+            StartCoroutine(WaitAndHandleDataWebGL());
+        }
+        else
+        {
+            // Original code for Android/PC builds
+            string serverIP = GetServerIP();
+            fallbackData = $"{fallbackStudentId},http://{serverIP}:{port}";
+            Debug.Log($"🌐 Fallback data generated: {fallbackData}");
+            
+            // Wait for DataManager to be ready, then handle data
+            StartCoroutine(WaitAndHandleData());
+        }
     }
     
     private string GetServerIP()
@@ -74,6 +94,7 @@ public class UnityDataReceiver : MonoBehaviour
         }
     }
     
+    // Original coroutine for Android/PC builds
     private IEnumerator WaitAndHandleData()
     {
         float elapsed = 0f;
@@ -110,6 +131,87 @@ public class UnityDataReceiver : MonoBehaviour
         else
         {
             Debug.Log("✅ Data successfully received from React Native!");
+        }
+    }
+    
+    // New coroutine for WebGL builds
+    private IEnumerator WaitAndHandleDataWebGL()
+    {
+        float elapsed = 0f;
+        
+        // Wait until DataManager instance exists
+        while (DataManager.Instance == null)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+            
+            if (elapsed >= 1f)
+            {
+                Debug.LogWarning("⏳ Still waiting for DataManager...");
+                elapsed = 0f;
+            }
+        }
+        
+        Debug.Log("✅ DataManager found!");
+        
+        // Try to get student ID and API URL from URL
+        int studentId = fallbackStudentId;
+        string apiUrl = $"http://localhost:{port}"; // Default fallback
+        
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        try
+        {
+            // Get the origin (protocol + host + port) where Unity is hosted
+            string origin = GetOriginURL();
+            
+            if (!string.IsNullOrEmpty(origin))
+            {
+                apiUrl = origin;
+                Debug.Log($"✅ API URL from origin: {apiUrl}");
+            }
+            
+            // Get student ID from URL parameter
+            string idFromUrl = GetURLParameter("id");
+            
+            if (!string.IsNullOrEmpty(idFromUrl))
+            {
+                studentId = int.Parse(idFromUrl);
+                dataReceived = true;
+                Debug.Log($"✅ Student ID from URL: {studentId}");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ No 'id' parameter in URL, using fallback");
+            }
+            
+            // Optional: Allow API override via query parameter
+            string apiFromUrl = GetURLParameter("api");
+            if (!string.IsNullOrEmpty(apiFromUrl))
+            {
+                apiUrl = apiFromUrl;
+                Debug.Log($"✅ API URL overridden from parameter: {apiUrl}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"❌ Error parsing URL parameters: {ex.Message}");
+            Debug.LogWarning("⚠️ Using fallback values");
+        }
+        #else
+        Debug.LogWarning("⚠️ WebGL JS functions not available in Editor, using fallback values");
+        #endif
+        
+        // Set the data in DataManager
+        Debug.Log($"🔧 Setting - Student ID: {studentId}, API: {apiUrl}");
+        DataManager.Instance.SetData(studentId, apiUrl);
+        
+        if (dataReceived)
+        {
+            Debug.Log("✅ Data successfully loaded from URL!");
+        }
+        else
+        {
+            Debug.Log("ℹ️ Using fallback data for testing.");
         }
     }
     

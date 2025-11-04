@@ -128,9 +128,7 @@ public class ToysMenu : MonoBehaviour
 
     public void showConfirm(int selected)
     {
-        // Set the static selectedSoapIndex for backend and UI updates
         selectedToyIndex = selected;
-        // Update the confirmation panel text with soap name and cost
         Confirmtext.text = $"Are you sure you want to buy {toyname[selected - 1]} for {prices[selected - 1]} Coins?";
 
         // Show the confirmation panel
@@ -149,17 +147,14 @@ public class ToysMenu : MonoBehaviour
     {
         string petKey = PlayerPrefKeys.PetPrefix;
         int currentCoins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
-        int toyCost = prices[selectedToyIndex - 1]; // Fetch the cost for the selected soap
-        string toyTypes = toy_types[selectedToyIndex - 1]; // Get the correct soap type string
+        int toyCost = prices[selectedToyIndex - 1];
+        string toyTypes = toy_types[selectedToyIndex - 1];
 
         if (currentCoins >= toyCost)
         {
             SM.PlayCoinSound();
             // Deduct the coins
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins - toyCost);
-
-            // Save the soap transaction
-            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.soap_quantity, 1); // Assuming 1 soap is bought
 
             // Sync with the backend
             string url = $"{apiUrlSecondary}/pets/{petId}/buyToy"; // Use the secondary API
@@ -179,8 +174,8 @@ public class ToysMenu : MonoBehaviour
         else
         {
             // Show "Not Enough Coins" panel if the player does not have enough coins
-            ShowNotEnoughCoinsPanel();
             ConfirmPanel.SetActive(false);
+            ShowNotEnoughCoinsPanel();
         }
     }
 

@@ -165,7 +165,7 @@ public class PetBehaviour : MonoBehaviour
         transform.position = new Vector3(0f, -2.25f, 0f);
 
         // Set the initial scale of the pet to 0.33 (idle state scale)
-        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
+        transform.localScale = new Vector3(0.45f, 0.45f, 1f);
 
         // Set initial state to idle
         animator.SetInteger("sleepType", 0); // Idle state initially
@@ -230,7 +230,7 @@ public class PetBehaviour : MonoBehaviour
         StartCoroutine(idleAccessories());
 
         // Set the idle scale to 0.33 (fixed value for idle state)
-        transform.localScale = new Vector3(0.4f, 0.4f, 1f);
+        transform.localScale = new Vector3(0.45f, 0.45f, 1f);
     }
 
     private IEnumerator idleAccessories()
@@ -371,7 +371,7 @@ public class PetBehaviour : MonoBehaviour
         float normalizedY = Mathf.InverseLerp(-2.55f, -1.88f, currentY);
 
         // Calculate the new scale based on the normalized Y value
-        float idleScale = Mathf.Lerp(0.4f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
+        float idleScale = Mathf.Lerp(0.45f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
         float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY); // Movement scale range from 0.5 to 0.2
 
         // Apply the new scale to the pet
@@ -492,6 +492,7 @@ public class PetBehaviour : MonoBehaviour
             int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
             int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
 
+            StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger, hunger);
             // Create an array with the updated stats
             int[] stats = new int[] { playfulness, hunger, bath, sleep };
         
@@ -528,9 +529,8 @@ public class PetBehaviour : MonoBehaviour
             if (!isTouching)
             {
                 isTouching = true;
-                int soap_quantity = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity);
-                Debug.Log(soap_quantity);
-                if (soap_quantity == 0)
+                int currentCoins = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetCoins);
+                if (currentCoins >= 2)
                 {
                     SoapNotEnoughPanel.SetActive(true);
                     for (int i = 0; i < accessoryObjects.Length; i++)
@@ -647,31 +647,11 @@ public class PetBehaviour : MonoBehaviour
         {
             button.SetActive(true);  // Enable any buttons that were disabled
         }
-    
-        // Update soap quantity in PlayerPrefs
-        string soap_quantity = PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_quantity;
-        int finished_sq = PlayerPrefs.GetInt(soap_quantity) - 1;
-        SoapQuantityText.text = finished_sq.ToString() + "x";  // Update the UI with the new soap quantity
-        PlayerPrefs.SetInt(soap_quantity, finished_sq);
-          // Save the updated soap quantity
-
         // Call the API to update soap usage on the backend
         yield return StartCoroutine(UpdateSoapUsageOnBackend());
-    
+
         // Call the DataManager API to sync pet data after the shower routine
         DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-    
-        // Retrieve and update stats
-        int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
-        int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-        int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
-        int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
-        PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
-        // Create an array with the updated stats
-        int[] stats = new int[] { playfulness, hunger, bath, sleep };
-    
-        // Call UpdateButtonFill with the stats array
-        HPS.UpdateButtonFill(stats);
         ShowerButton.SetActive(false);
         bubbleCount = 0;  // Reset bubble count (if needed)
     }
@@ -688,26 +668,13 @@ public class PetBehaviour : MonoBehaviour
 
         // Construct the API URL for soap usage
         string url = $"{apiUrlSecondary}/pets/{petId}/soapuse";
-        string soap_type = "";
-        int soapusing = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type);
-        switch(soapusing)
-        {
-            case 0: soap_type = "soap_1"; break;
-            case 1: soap_type = "soap_2"; break;
-            case 2: soap_type = "soap_3"; break;
-            case 3: soap_type = "soap_4"; break;
-            default: soap_type = "soap_1"; break;
-        }
-    
-        // Create payload object using serializable class
-        SoapUsagePayload payload = new SoapUsagePayload
-        {
-            soap_type = soap_type
-        };
-    
-        // Convert to JSON
+
+        // Create payload object (no soap_type required now)
+        var payload = new object();  // No need to send soap_type
+
+        // Convert to JSON (empty object since no soap_type is needed)
         string jsonData = JsonUtility.ToJson(payload);
-    
+
         // Create a UnityWebRequest to make a PUT request
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
         {
@@ -715,14 +682,33 @@ public class PetBehaviour : MonoBehaviour
             downloadHandler = new DownloadHandlerBuffer()
         };
         request.SetRequestHeader("Content-Type", "application/json");
-    
+
         // Send the request and wait for the response
         yield return request.SendWebRequest();
-    
+
         // Handle the response
         if (request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Soap usage updated successfully on the backend.");
+            // Update soap quantity in PlayerPrefs
+            int currentCoins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
+            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, currentCoins - 3);
+
+            foreach (var coin in Coins)
+            {
+                coin.text = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins).ToString();
+            }
+            // Retrieve and update stats
+            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
+            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
+            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
+            StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
+            // Create an array with the updated stats
+            int[] stats = new int[] { playfulness, hunger, bath, sleep };
+
+            // Call UpdateButtonFill with the stats array
+            HPS.UpdateButtonFill(stats);
         }
         else
         {
@@ -801,8 +787,7 @@ public class PetBehaviour : MonoBehaviour
             }
             isSleeping = true;
             canWalk = false;
-            PlayerPrefs.SetInt(PlayerPrefKeys.isSleeping, 1);
-            PlayerPrefs.Save();
+            StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
             
         }
         else
@@ -813,8 +798,7 @@ public class PetBehaviour : MonoBehaviour
             {
                 button.SetActive(true);
             }
-            PlayerPrefs.SetInt(PlayerPrefKeys.isSleeping, 0);
-            PlayerPrefs.Save();
+            StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
             StartIdle();
         }
         if (!FTLIFS)
@@ -883,10 +867,4 @@ public class SleepPayload
 {
     public int petId;
     public bool isSleep;
-}
-
-[System.Serializable]
-public class SoapUsagePayload
-{
-    public string soap_type;
 }

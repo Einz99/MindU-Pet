@@ -18,8 +18,13 @@ public class DataManager : MonoBehaviour
 
     // Loading Screen UI (you can assign this in the Unity Inspector)
     public GameObject loadingScreen;
+    public GameObject VideoOrSkipScreen;
     public GameObject CreationScreen;
     public float loadingScreenDuration = 5f;  // Set the duration of loading screen (5-10 seconds)
+    
+    private bool isWebGL = false;
+
+    public SlideUpOverlay slideUpOverlay; // Reference to SlideUpOverlay script
 
     private void Awake()
     {
@@ -36,8 +41,10 @@ public class DataManager : MonoBehaviour
             Destroy(gameObject);
             return; // Don't continue if this is a duplicate
         }
+        
+        isWebGL = Application.platform == RuntimePlatform.WebGLPlayer;
 
-        // Load data from PlayerPrefs
+        // Load data from PlayerPrefs (or AsyncStorage in WebGL)
         LoadData();
 
         // ONLY start fetching if we have valid data
@@ -50,12 +57,25 @@ public class DataManager : MonoBehaviour
             Debug.LogWarning("⚠️ Waiting for data from UnityDataReceiver...");
         }
     }
+    
     public void StartDataFetch()
     {
         if (studentId > 0 && !string.IsNullOrEmpty(apiUrlSecondary))
         {
             Debug.Log("✅ Data received! Starting pet data fetch...");
-            StartCoroutine(HandlePetDataRequest());
+            
+            // Load saved data from AsyncStorage if in WebGL
+            if (isWebGL && StorageBridge.Instance != null)
+            {
+                StorageBridge.Instance.LoadAllData(() => {
+                    Debug.Log("✅ AsyncStorage data loaded");
+                    StartCoroutine(HandlePetDataRequest());
+                });
+            }
+            else
+            {
+                StartCoroutine(HandlePetDataRequest());
+            }
         }
         else
         {
@@ -150,9 +170,19 @@ public class DataManager : MonoBehaviour
                     Debug.Log("Pet found! Saving data and loading scene...");
                     // Pet data found, save it to PlayerPrefs and go to the pet scene
                     SavePetData(petsWrapper.pet);
+
+
                     if (loadingScreen != null)
                     {
-                        ShowPetScene();
+                        bool IsWatchTutorial = PlayerPrefs.GetInt(PlayerPrefKeys.IsWatchTutorial, 0) == 1;
+                        if (!IsWatchTutorial)
+                        {
+                            VideoOrSkipScreen.SetActive(true);
+                            loadingScreen.SetActive(false);
+                        } else {
+                            Debug.Log("Returning user - going to Pet Scene");
+                            ShowPetScene();
+                        }
                     }
                 }
             }
@@ -255,6 +285,12 @@ public class DataManager : MonoBehaviour
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.soap_quantity, 3);
         }
         PlayerPrefs.Save();  // Save all PlayerPrefs data
+        
+        // If WebGL, also save to AsyncStorage
+        if (isWebGL && StorageBridge.Instance != null)
+        {
+            StorageBridge.Instance.SaveAllData();
+        }
     }
 
     // Method to set the data in PlayerPrefs
@@ -287,6 +323,37 @@ public class DataManager : MonoBehaviour
         
         // NOW trigger the data fetch
         StartDataFetch();
+    }
+
+    public void SkipToPetScene()
+    {
+        string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
+        bool hasPetData = PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetID) && 
+                      PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID) > 0 &&
+                      PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetName) &&
+                      !string.IsNullOrEmpty(PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName));
+
+        if (!hasPetData) { 
+            slideUpOverlay.CreatePetAndSendData();
+        } else {
+            ShowPetScene();
+        }
+    }
+
+    public void WatchedTutorial() {
+        StorageBridge.Instance.SaveValue(PlayerPrefKeys.IsWatchTutorial, 1);
+
+        string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
+        bool hasPetData = PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetID) && 
+                      PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID) > 0 &&
+                      PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetName) &&
+                      !string.IsNullOrEmpty(PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName));
+
+        if (!hasPetData) { 
+            slideUpOverlay.CreatePetAndSendData();
+        } else {
+            ShowPetScene();
+        }
     }
 }
 

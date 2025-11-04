@@ -22,7 +22,7 @@ public class InitialSoap : MonoBehaviour
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
         Debug.Log($"From InitialSoap:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
-        StartCoroutine(FetchSoapData());
+        // StartCoroutine(FetchSoapData());
     }
 
     private IEnumerator FetchSoapData()

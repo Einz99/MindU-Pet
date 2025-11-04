@@ -177,6 +177,7 @@ public class GlassesMenu : MonoBehaviour
         else
         {
             // Show "Not Enough Coins" panel if the player does not have enough coins
+            ConfirmPanel.SetActive(false);
             ShowNotEnoughCoinsPanel();
         }
     }

@@ -6,6 +6,7 @@ using System.Collections;
 
 public class DailyRewardMenu : MonoBehaviour
 {
+    public GameObject dailyRewardPanel;
     public TMP_Text[] coins;
     public UnityEngine.UI.Image rewardImage;
     public Sprite[] RewardImg;
@@ -213,7 +214,7 @@ public class DailyRewardMenu : MonoBehaviour
                     Debug.Log($"🎉 Reward claimed! Type: {response.data.reward_type}, Amount: {response.data.reward_amount}");
                     
                     // Close the menu
-                    gameObject.SetActive(false);
+                    dailyRewardPanel.SetActive(false);
                 }
             }
             else

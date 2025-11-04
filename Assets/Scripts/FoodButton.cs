@@ -8,7 +8,8 @@ public class FoodButton : MonoBehaviour
 {
     public PetBehaviour petBehaviour;
     public GameObject NotEnoughFoodPanel;
-    public GameObject Foodtext;
+    public GameObject FoodIcon;
+    public TMP_Text[] Foodtext;
     private InputAction clickAction;
     private InputAction positionAction; // Add this
     private bool isClickable = true;
@@ -65,7 +66,7 @@ public class FoodButton : MonoBehaviour
             }
 
             petBehaviour.OnFeedButtonPressed();
-            Foodtext.SetActive(false);
+            FoodIcon.SetActive(false);
 
             StartCoroutine(DisableClickForDuration(10f));
             StartCoroutine(DecreaseFoodOnBackend());
@@ -97,7 +98,7 @@ public class FoodButton : MonoBehaviour
         yield return new WaitForSeconds(duration);
 
         isClickable = true;
-        Foodtext.SetActive(true);
+        FoodIcon.SetActive(true);
         foodquantity -= 1;
         int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
         int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger) + 30;
@@ -117,10 +118,14 @@ public class FoodButton : MonoBehaviour
         PlayerPrefs.Save();
         // Create an array with the updated stats
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
-    
+
         // Call UpdateButtonFill with the stats array
         HPS.UpdateButtonFill(stats);
-        Foodtext.GetComponent<TMP_Text>().text = foodquantity.ToString() + "x";
+        foreach (var text in Foodtext)
+        {
+            text.text = foodquantity.ToString() + "x";
+        }
+        
     }
 
     private IEnumerator DecreaseFoodOnBackend()

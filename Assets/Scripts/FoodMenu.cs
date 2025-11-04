@@ -20,7 +20,7 @@ public class FoodMenu : MonoBehaviour
     public Button ConfirmTransact;
     public TMP_Text[] Coins;
     public SoundManager SM;
-    public TMP_Text Foodquantity;
+    public TMP_Text[] Foodtext;
 
     void OnEnable()
     {
@@ -124,11 +124,15 @@ public class FoodMenu : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-                Debug.Log("Food updated successfully: " + request.downloadHandler.text);
-                ConfirmPanel.SetActive(false);
+            Debug.Log("Food updated successfully: " + request.downloadHandler.text);
             PlayerPrefs.Save();
-
-            // Update the displayed coin amount
+            int foodquantity = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetFoodStack);
+            foreach (var text in Foodtext)
+            {
+                text.text = foodquantity.ToString() + "x";
+            }
+            // Update the displayed 
+            // coin amount
             foreach (var coin in Coins)
             {
                 coin.text = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins).ToString();
@@ -141,12 +145,14 @@ public class FoodMenu : MonoBehaviour
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins); // Restore coins
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetFoodStack, currentFoodStack); // Restore food stack
             PlayerPrefs.Save();
-            ConfirmPanel.SetActive(false);
         }
+    
+        ConfirmPanel.SetActive(false);
     }
     else
     {
         // Show the "Not Enough Coins" panel
+        ConfirmPanel.SetActive(false);
         ShowNotEnoughCoinsPanel();
     }
 }
