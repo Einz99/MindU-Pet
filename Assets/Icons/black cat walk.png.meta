@@ -1,0 +1,962 @@
+fileFormatVersion: 2
+guid: 35cc0fd62edcc4648add5c916be25119
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6764924311483605973
+    second: black cat walk_0
+  - first:
+      213: 1660685332725164041
+    second: black cat walk_1
+  - first:
+      213: -2351956264082008990
+    second: black cat walk_2
+  - first:
+      213: -2924137977082038672
+    second: black cat walk_3
+  - first:
+      213: -5655045784346239011
+    second: black cat walk_4
+  - first:
+      213: 1992469251809330344
+    second: black cat walk_5
+  - first:
+      213: 7518655992887503963
+    second: black cat walk_6
+  - first:
+      213: -2067398020359615393
+    second: black cat walk_7
+  - first:
+      213: 7037634417675448396
+    second: black cat walk_8
+  - first:
+      213: 2135220891788667750
+    second: black cat walk_9
+  - first:
+      213: -590076837811230813
+    second: black cat walk_10
+  - first:
+      213: -2319439945841579505
+    second: black cat walk_11
+  - first:
+      213: -6471291765928780991
+    second: black cat walk_12
+  - first:
+      213: -4340863142758124147
+    second: black cat walk_13
+  - first:
+      213: 6515324891570870878
+    second: black cat walk_14
+  - first:
+      213: -8280263071886581015
+    second: black cat walk_15
+  - first:
+      213: 2077634151891469691
+    second: black cat walk_16
+  - first:
+      213: 2197619579680098068
+    second: black cat walk_17
+  - first:
+      213: 2810855407543524376
+    second: black cat walk_18
+  - first:
+      213: -640969584571013132
+    second: black cat walk_19
+  - first:
+      213: -8403625227902738104
+    second: black cat walk_20
+  - first:
+      213: 7226374210384235850
+    second: black cat walk_21
+  - first:
+      213: -3934185173512617639
+    second: black cat walk_22
+  - first:
+      213: 369014392893033473
+    second: black cat walk_23
+  - first:
+      213: -3472055858662763986
+    second: black cat walk_24
+  - first:
+      213: -1056243322446568241
+    second: black cat walk_25
+  - first:
+      213: 2748725809658766511
+    second: black cat walk_26
+  - first:
+      213: 5031306481439220532
+    second: black cat walk_27
+  - first:
+      213: 2612161585558746426
+    second: black cat walk_28
+  - first:
+      213: 6856849784364523220
+    second: black cat walk_29
+  - first:
+      213: -7107055113943906798
+    second: black cat walk_30
+  - first:
+      213: -5399995890222276318
+    second: black cat walk_31
+  - first:
+      213: -7422495405252863571
+    second: black cat walk_32
+  - first:
+      213: -1777845658427489576
+    second: black cat walk_33
+  - first:
+      213: -6540767547329413718
+    second: black cat walk_34
+  - first:
+      213: -2322330332826816449
+    second: black cat walk_35
+  - first:
+      213: 7279843552874243580
+    second: black cat walk_36
+  - first:
+      213: -8528360258003872319
+    second: black cat walk_37
+  - first:
+      213: 8742635328289719852
+    second: black cat walk_38
+  - first:
+      213: -6971543840423672134
+    second: black cat walk_39
+  - first:
+      213: 5983404891575945493
+    second: black cat walk_40
+  - first:
+      213: 7888440906373662956
+    second: black cat walk_41
+  - first:
+      213: -3729747082546105219
+    second: black cat walk_42
+  - first:
+      213: 7242766636111293932
+    second: black cat walk_43
+  - first:
+      213: 6507504463307170569
+    second: black cat walk_44
+  - first:
+      213: -4511863358797767182
+    second: black cat walk_45
+  - first:
+      213: -2056609125798520674
+    second: black cat walk_46
+  - first:
+      213: 8512259745582392639
+    second: black cat walk_47
+  - first:
+      213: -4213079965841749862
+    second: black cat walk_48
+  - first:
+      213: 3025041041440272775
+    second: black cat walk_49
+  - first:
+      213: -1868933612452869694
+    second: black cat walk_50
+  - first:
+      213: 3116730545751291631
+    second: black cat walk_51
+  - first:
+      213: -725699742798844280
+    second: black cat walk_52
+  - first:
+      213: 6722681410320895196
+    second: black cat walk_53
+  - first:
+      213: -6958733542148143061
+    second: black cat walk_54
+  - first:
+      213: 1140638315390830018
+    second: black cat walk_55
+  - first:
+      213: 7592508726911825894
+    second: black cat walk_56
+  - first:
+      213: 6969817245824717140
+    second: black cat walk_57
+  - first:
+      213: 1500081339997965185
+    second: black cat walk_58
+  - first:
+      213: -6459444692298638043
+    second: black cat walk_59
+  - first:
+      213: -8258286681293612932
+    second: black cat walk_60
+  - first:
+      213: 7086575983882006876
+    second: black cat walk_61
+  - first:
+      213: 4282043579126255848
+    second: black cat walk_62
+  - first:
+      213: -156034321079151069
+    second: black cat walk_63
+  - first:
+      213: 4895343255331154354
+    second: black cat walk_64
+  - first:
+      213: -337262891845668168
+    second: black cat walk_65
+  - first:
+      213: 1359509988835922161
+    second: black cat walk_66
+  - first:
+      213: -5797792053757878143
+    second: black cat walk_67
+  - first:
+      213: -5614119578957856168
+    second: black cat walk_68
+  - first:
+      213: 230128673316136906
+    second: black cat walk_69
+  - first:
+      213: -5153241449596471238
+    second: black cat walk_70
+  - first:
+      213: 8683572755617862308
+    second: black cat walk_71
+  - first:
+      213: 5052496623791185075
+    second: black cat walk_72
+  - first:
+      213: 315623431580392302
+    second: black cat walk_73
+  - first:
+      213: 6959259756866418684
+    second: black cat walk_74
+  - first:
+      213: -3695207320261187884
+    second: black cat walk_75
+  - first:
+      213: 7505811865027955984
+    second: black cat walk_76
+  - first:
+      213: -3354610857335799150
+    second: black cat walk_77
+  - first:
+      213: 7054294752511585145
+    second: black cat walk_78
+  - first:
+      213: -4500758889530199947
+    second: black cat walk_79
+  - first:
+      213: -8792026475785527832
+    second: black cat walk_80
+  - first:
+      213: 4880280947121594386
+    second: black cat walk_81
+  - first:
+      213: -6398004047021254630
+    second: black cat walk_82
+  - first:
+      213: 291284017562692516
+    second: black cat walk_83
+  - first:
+      213: 7580467363122938567
+    second: black cat walk_84
+  - first:
+      213: 5200051942321701716
+    second: black cat walk_85
+  - first:
+      213: -4667198408843043373
+    second: black cat walk_86
+  - first:
+      213: -1412092382105435666
+    second: black cat walk_87
+  - first:
+      213: 936060963117653152
+    second: black cat walk_88
+  - first:
+      213: -4619196038449872080
+    second: black cat walk_89
+  - first:
+      213: -4738113166834949077
+    second: black cat walk_90
+  - first:
+      213: -320572361526527348
+    second: black cat walk_91
+  - first:
+      213: -5346475217564654328
+    second: black cat walk_92
+  - first:
+      213: -53305614091394410
+    second: black cat walk_93
+  - first:
+      213: 5692989492913750608
+    second: black cat walk_94
+  - first:
+      213: -3885615546107239258
+    second: black cat walk_95
+  - first:
+      213: 6557265678383892925
+    second: black cat walk_96
+  - first:
+      213: -6648339157311162881
+    second: black cat walk_97
+  - first:
+      213: 2431083026135654945
+    second: black cat walk_98
+  - first:
+      213: -7281664964810596247
+    second: black cat walk_99
+  - first:
+      213: -3837466147742765155
+    second: black cat walk_100
+  - first:
+      213: -4684204357467724116
+    second: black cat walk_101
+  - first:
+      213: 5649146669549382999
+    second: black cat walk_102
+  - first:
+      213: -6562668037000975541
+    second: black cat walk_103
+  - first:
+      213: -519080519664178361
+    second: black cat walk_104
+  - first:
+      213: -2095863324852698855
+    second: black cat walk_105
+  - first:
+      213: 5874842679997049792
+    second: black cat walk_106
+  - first:
+      213: -7372077965646395825
+    second: black cat walk_107
+  - first:
+      213: -6110116129573519396
+    second: black cat walk_108
+  - first:
+      213: -221105103581650879
+    second: black cat walk_109
+  - first:
+      213: 2148649622413954883
+    second: black cat walk_110
+  - first:
+      213: -956927926757727322
+    second: black cat walk_111
+  - first:
+      213: 1351667457910888331
+    second: black cat walk_112
+  - first:
+      213: 8046970883111910693
+    second: black cat walk_113
+  - first:
+      213: 6311520614662229481
+    second: black cat walk_114
+  - first:
+      213: 4590599347715534029
+    second: black cat walk_115
+  - first:
+      213: -1584118496263470615
+    second: black cat walk_116
+  - first:
+      213: 2477254306940011884
+    second: black cat walk_117
+  - first:
+      213: -5618915746754432380
+    second: black cat walk_118
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: black cat walk_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d36266b1d6d1ed50800000000000000
+      internalID: 6764924311483605973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_1
+      rect:
+        serializedVersion: 2
+        x: 279
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 908e8cce280fb0710800000000000000
+      internalID: 1660685332725164041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_2
+      rect:
+        serializedVersion: 2
+        x: 558
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26413203d3c2c5fd0800000000000000
+      internalID: -2351956264082008990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_3
+      rect:
+        serializedVersion: 2
+        x: 837
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 076bbc9a0006b67d0800000000000000
+      internalID: -2924137977082038672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_4
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddfd87322dd3581b0800000000000000
+      internalID: -5655045784346239011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_5
+      rect:
+        serializedVersion: 2
+        x: 1395
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a4cbfb5a3ca6ab10800000000000000
+      internalID: 1992469251809330344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_6
+      rect:
+        serializedVersion: 2
+        x: 1674
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5ceb6c3ac1a75860800000000000000
+      internalID: 7518655992887503963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_7
+      rect:
+        serializedVersion: 2
+        x: 1953
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5c8e1b34702f43e0800000000000000
+      internalID: -2067398020359615393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_8
+      rect:
+        serializedVersion: 2
+        x: 2232
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c40bb944733baa160800000000000000
+      internalID: 7037634417675448396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_9
+      rect:
+        serializedVersion: 2
+        x: 2511
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66b6e049614d1ad10800000000000000
+      internalID: 2135220891788667750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_10
+      rect:
+        serializedVersion: 2
+        x: 2790
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a7631c0e30afc7f0800000000000000
+      internalID: -590076837811230813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_11
+      rect:
+        serializedVersion: 2
+        x: 3069
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0ae24e78a1bfcfd0800000000000000
+      internalID: -2319439945841579505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_12
+      rect:
+        serializedVersion: 2
+        x: 3348
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14b97eddc6a5136a0800000000000000
+      internalID: -6471291765928780991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_13
+      rect:
+        serializedVersion: 2
+        x: 3627
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d85f05578f722c3c0800000000000000
+      internalID: -4340863142758124147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_14
+      rect:
+        serializedVersion: 2
+        x: 3906
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5a975e18751b6a50800000000000000
+      internalID: 6515324891570870878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_15
+      rect:
+        serializedVersion: 2
+        x: 4185
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e26a695b98961d80800000000000000
+      internalID: -8280263071886581015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_16
+      rect:
+        serializedVersion: 2
+        x: 4464
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7506bcd04d35dc10800000000000000
+      internalID: 2077634151891469691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_17
+      rect:
+        serializedVersion: 2
+        x: 4743
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 417864e3d538f7e10800000000000000
+      internalID: 2197619579680098068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_18
+      rect:
+        serializedVersion: 2
+        x: 5022
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81c1e91c91a220720800000000000000
+      internalID: 2810855407543524376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: black cat walk_19
+      rect:
+        serializedVersion: 2
+        x: 5301
+        y: 0
+        width: 279
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f7a0df0f81da17f0800000000000000
+      internalID: -640969584571013132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: b5faa02a10c3c634aac94aa14821792f
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":20.0,"y":1.0},"gridSpriteSize":{"x":279.0,"y":57.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      black cat walk_0: 6764924311483605973
+      black cat walk_1: 1660685332725164041
+      black cat walk_10: -590076837811230813
+      black cat walk_11: -2319439945841579505
+      black cat walk_12: -6471291765928780991
+      black cat walk_13: -4340863142758124147
+      black cat walk_14: 6515324891570870878
+      black cat walk_15: -8280263071886581015
+      black cat walk_16: 2077634151891469691
+      black cat walk_17: 2197619579680098068
+      black cat walk_18: 2810855407543524376
+      black cat walk_19: -640969584571013132
+      black cat walk_2: -2351956264082008990
+      black cat walk_3: -2924137977082038672
+      black cat walk_4: -5655045784346239011
+      black cat walk_5: 1992469251809330344
+      black cat walk_6: 7518655992887503963
+      black cat walk_7: -2067398020359615393
+      black cat walk_8: 7037634417675448396
+      black cat walk_9: 2135220891788667750
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
