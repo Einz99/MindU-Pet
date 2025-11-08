@@ -181,13 +181,13 @@ public class HorizontalPageScroller : MonoBehaviour
 
     private IEnumerator ShowToys()
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.8f + scrollDuration - 1f);
         Toys.SetActive(true);
     }
 
     private IEnumerator ShowSoap()
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.8f + scrollDuration - 1f);
         SpriteRenderer soapSpriteRenderer = soapObject.GetComponent<SpriteRenderer>();
         soapSpriteRenderer.enabled = true;
         SoapQuantity.SetActive(true);
@@ -195,7 +195,7 @@ public class HorizontalPageScroller : MonoBehaviour
     }
     private IEnumerator ShowFoodQuantity()
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.8f + scrollDuration - 1f);
         FoodQuantity.SetActive(true);
     }
 
@@ -266,6 +266,9 @@ public class HorizontalPageScroller : MonoBehaviour
             petBehaviour.DisableBehavior(); // Disable pet behavior when leaving page 0
             StartCoroutine(petBehaviour.WalkToInitialPosition());
         }
+
+        int durationMultiplier = Math.Abs(currentPage - pageIndex);
+        scrollDuration = 1f * durationMultiplier;
 
         bool goLeft = currentPage > pageIndex;
 

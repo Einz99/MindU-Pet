@@ -165,7 +165,7 @@ public class PetBehaviour : MonoBehaviour
         transform.position = new Vector3(0f, -2.25f, 0f);
 
         // Set the initial scale of the pet to 0.33 (idle state scale)
-        transform.localScale = new Vector3(0.45f, 0.45f, 1f);
+        transform.localScale = new Vector3(0.5f, 0.5f, 1f);
 
         // Set initial state to idle
         animator.SetInteger("sleepType", 0); // Idle state initially
@@ -230,7 +230,7 @@ public class PetBehaviour : MonoBehaviour
         StartCoroutine(idleAccessories());
 
         // Set the idle scale to 0.33 (fixed value for idle state)
-        transform.localScale = new Vector3(0.45f, 0.45f, 1f);
+        transform.localScale = new Vector3(0.5f, 0.5f, 1f);
     }
 
     private IEnumerator idleAccessories()
@@ -371,7 +371,7 @@ public class PetBehaviour : MonoBehaviour
         float normalizedY = Mathf.InverseLerp(-2.55f, -1.88f, currentY);
 
         // Calculate the new scale based on the normalized Y value
-        float idleScale = Mathf.Lerp(0.45f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
+        float idleScale = Mathf.Lerp(0.5f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
         float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY); // Movement scale range from 0.5 to 0.2
 
         // Apply the new scale to the pet
@@ -530,7 +530,7 @@ public class PetBehaviour : MonoBehaviour
             {
                 isTouching = true;
                 int currentCoins = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetCoins);
-                if (currentCoins >= 2)
+                if (currentCoins <= 2)
                 {
                     SoapNotEnoughPanel.SetActive(true);
                     for (int i = 0; i < accessoryObjects.Length; i++)
@@ -561,7 +561,6 @@ public class PetBehaviour : MonoBehaviour
                     return;
                 }
                 SoapQuantity.SetActive(false);
-                SM.PlayBubble();
                 // Start the coroutine to spawn bubbles
                 StartCoroutine(SpawnBubblesRandomlyInCollider());
             }
@@ -578,6 +577,7 @@ public class PetBehaviour : MonoBehaviour
             isTouching = false; // Allow for further spawning in future collisions
             yield break; // Stop the coroutine if the bubble limit is reached
         }
+        SM.PlayBubble();
 
         bubbleCount++; // Increment the bubble count for each spawn session
 
@@ -701,7 +701,7 @@ public class PetBehaviour : MonoBehaviour
             // Retrieve and update stats
             int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
             int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) + 10;  // Assuming bath is stored in hygiene
             int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
             StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
             // Create an array with the updated stats
@@ -714,6 +714,7 @@ public class PetBehaviour : MonoBehaviour
         {
             Debug.LogError("Error updating soap usage on backend: " + request.error);
         }
+        SoapQuantity.SetActive(true);
     }
  
     // Function to move and fade the bubbles

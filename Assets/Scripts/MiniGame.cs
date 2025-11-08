@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using TMPro; // Add this if using TextMeshPro
 
 public class MiniGame : MonoBehaviour
 {
@@ -25,6 +26,11 @@ public class MiniGame : MonoBehaviour
     public GameObject petObject;
     private PetBehaviour petBehaviour;
 
+    // NEW: Result Panel UI Elements
+    public GameObject ResultPanel;
+    public TextMeshProUGUI ResultTitleText; // or use "public Text ResultTitleText;" for legacy UI
+    public TextMeshProUGUI ResultMessageText; // or use "public Text ResultMessageText;" for legacy UI
+
     private Vector3 successPositionLeft = new Vector3(-2.1f, 3.5f, 0);
     private Vector3 goodCatchPositionLeft = new Vector3(-3.5f, 3.5f, 0);
     private Vector3 badCatchPositionLeft = new Vector3(-4f, 6f, 0);
@@ -43,15 +49,16 @@ public class MiniGame : MonoBehaviour
     private bool isInMiniGame = false;
     private bool[] savedAccessoryStates;
 
-    // NEW: Time-based cooldown tracking
-    private float cooldownEndTime = 0f;
-    private float cooldownDuration = 0f;
-
     private int[] additionalIncrement = new int[] { 8, 10, 12, 15, 15, 20 };
+    private string lastResult = ""; // Store the result type
 
     private void Start()
     {
         petBehaviour = petObject.GetComponent<PetBehaviour>();
+        
+        // Make sure result panel is hidden at start
+        if (ResultPanel != null)
+            ResultPanel.SetActive(false);
     }
 
     void Update()
@@ -82,36 +89,6 @@ public class MiniGame : MonoBehaviour
         }
     }
 
-    // NEW: Check cooldown on enable
-    private void OnEnable()
-    {
-        UpdateToyButtonStates();
-    }
-
-    // NEW: Update button states based on cooldown
-    private void UpdateToyButtonStates()
-    {
-        bool isOnCooldown = Time.time < cooldownEndTime;
-        
-        foreach (var toy in Toys)
-        {
-            if (toy != null)
-            {
-                Button btn = toy.GetComponent<Button>();
-                if (btn != null)
-                {
-                    btn.interactable = !isOnCooldown;
-                }
-            }
-        }
-
-        if (isOnCooldown)
-        {
-            float remainingTime = cooldownEndTime - Time.time;
-            Debug.Log($"Cooldown active. {Mathf.CeilToInt(remainingTime)} seconds remaining.");
-        }
-    }
-
     private void ForceAccessoriesOff()
     {
         foreach (var accessory in accessoryObjects)
@@ -125,14 +102,6 @@ public class MiniGame : MonoBehaviour
 
     public void StartMiniGame(int toyIndex)
     {
-        // Check if cooldown is active
-        if (Time.time < cooldownEndTime)
-        {
-            float remainingTime = cooldownEndTime - Time.time;
-            Debug.Log($"Minigame is on cooldown. Wait {Mathf.CeilToInt(remainingTime)} more seconds.");
-            return;
-        }
-
         TopOfScreen.SetActive(false);
         GameBG.SetActive(true);
         PetSpriteRenderer.sortingOrder = 3;
@@ -140,6 +109,7 @@ public class MiniGame : MonoBehaviour
         StartCoroutine(petBehaviour.WalkToInitialPosition());
         StartCoroutine(waitPetToPosition());
         Hand.SetActive(true);
+        tappable = true;
 
         foreach (var button in NavButtons)
         {
@@ -168,6 +138,10 @@ public class MiniGame : MonoBehaviour
         isGameRunning = true;
         isIncreasing = true;
         ButtonForTap.SetActive(true);
+        
+        // Make sure result panel is hidden when starting
+        if (ResultPanel != null)
+            ResultPanel.SetActive(false);
     }
 
     private IEnumerator waitPetToPosition()
@@ -240,41 +214,35 @@ public class MiniGame : MonoBehaviour
         Debug.Log("Final Position: " + BalltoPlay.transform.localPosition);
     }
 
-    private Vector3 GetRandomizedTargetPosition(Vector3 leftPosition, Vector3 rightPosition)
-    {
-        bool goLeft = Random.Range(0, 2) == 0;
-        isLeft = goLeft;
-        return goLeft ? leftPosition : rightPosition;
-    }
-
     private void DetermineSliderRange(float value)
     {
         isGameRunning = false;
         SliderGameBar.SetActive(false);
 
+        isLeft = Random.Range(0, 2) == 0;
+
         Vector3 targetPosition = initialPosition;
         Vector3 localTargetScale = initialScale;
 
-        Vector3 successTarget = GetRandomizedTargetPosition(successPositionLeft, successPositionRight);
-        Vector3 goodCatchTarget = GetRandomizedTargetPosition(goodCatchPositionLeft, goodCatchPositionRight);
-        Vector3 badCatchTarget = GetRandomizedTargetPosition(badCatchPositionLeft, badCatchPositionRight);
-
         if (value >= 40 && value <= 60)
         {
-            targetPosition = successTarget;
+            targetPosition = isLeft ? successPositionLeft : successPositionRight;
             localTargetScale = targetScale;
+            lastResult = "perfect";
             HandleSuccess();
         }
         else if ((value >= 30 && value < 40) || (value > 60 && value <= 70))
         {
-            targetPosition = goodCatchTarget;
+            targetPosition = isLeft ? goodCatchPositionLeft : goodCatchPositionRight;
             localTargetScale = targetScale;
+            lastResult = "good";
             HandleWarning();
         }
         else
         {
-            targetPosition = badCatchTarget;
+            targetPosition = isLeft ? badCatchPositionLeft : badCatchPositionRight;
             localTargetScale = badCatchScale;
+            lastResult = "miss";
             HandleFailure();
         }
 
@@ -294,10 +262,10 @@ public class MiniGame : MonoBehaviour
             toy.GetComponent<Button>().interactable = true;
         }
 
-        StartCoroutine(waitforsec(3f));
+        StartCoroutine(WaitAndShowResultPanel(3f));
     }
 
-    private IEnumerator waitforsec(float second)
+    private IEnumerator WaitAndShowResultPanel(float second)
     {
         yield return new WaitForSeconds(second);
         Debug.Log("Waited for " + second);
@@ -311,6 +279,62 @@ public class MiniGame : MonoBehaviour
             PetAnimation.SetBool("goJumpRight", false);
         }
 
+        // Show the result panel
+        ShowResultPanel();
+    }
+
+    private void ShowResultPanel()
+    {
+        // Update text based on result
+        string resultTitle = "";
+        string resultMessage = "";
+
+        switch (lastResult)
+        {
+            case "perfect":
+                resultTitle = "You threw the ball!";
+                resultMessage = "Perfect! Amazing throw!";
+                break;
+            case "good":
+                resultTitle = "You threw the ball!";
+                resultMessage = "Good! Nice try!";
+                break;
+            case "miss":
+                resultTitle = "You missed the throw!";
+                resultMessage = "Aww. Better luck next time!";
+                break;
+        }
+
+        if (ResultTitleText != null)
+            ResultTitleText.text = resultTitle;
+        if (ResultMessageText != null)
+            ResultMessageText.text = resultMessage;
+
+        // Show the panel
+        if (ResultPanel != null)
+            ResultPanel.SetActive(true);
+    }
+
+    // NEW: Button click handlers
+    public void OnGoBackClicked()
+    {
+        if (ResultPanel != null)
+            ResultPanel.SetActive(false);
+        
+        EndMiniGame();
+    }
+
+    public void OnPlayAgainClicked()
+    {
+        if (ResultPanel != null)
+            ResultPanel.SetActive(false);
+        
+        // Reset and start the minigame again
+        StartMiniGame(index);
+    }
+
+    private void EndMiniGame()
+    {
         isInMiniGame = false;
 
         HandAnimation.ResetTrigger("GoToss");
@@ -328,25 +352,6 @@ public class MiniGame : MonoBehaviour
         {
             button.SetActive(true);
         }
-
-        // NEW: Set cooldown end time
-        cooldownEndTime = Time.time + cooldownDuration;
-        Debug.Log($"Minigame cooldown started. Wait {cooldownDuration} seconds.");
-        
-        // Update button states immediately
-        UpdateToyButtonStates();
-        
-        // Start a coroutine to update buttons when cooldown ends (if still active)
-        StartCoroutine(WaitForCooldownEnd());
-    }
-
-    // NEW: Coroutine to re-enable buttons after cooldown (only if object is still active)
-    private IEnumerator WaitForCooldownEnd()
-    {
-        yield return new WaitForSeconds(cooldownDuration);
-        
-        Debug.Log("Minigame cooldown finished!");
-        UpdateToyButtonStates();
     }
 
     private void HandleSuccess()
@@ -371,7 +376,6 @@ public class MiniGame : MonoBehaviour
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
 
-        // Construct the API URL for updating playfulness
         string url = $"{apiUrlSecondary}/pets/{petId}/addPlay";
 
         PlayfulnessPayload payload = new PlayfulnessPayload
@@ -398,7 +402,6 @@ public class MiniGame : MonoBehaviour
             string responseText = request.downloadHandler.text;
             PetStatsResponse statsResponse = JsonUtility.FromJson<PetStatsResponse>(responseText);
 
-            // ✅ USE StorageBridge INSTEAD
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetPlayfulness, statsResponse.playfulness);
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHunger, statsResponse.hunger);
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHygiene, statsResponse.hygiene);
