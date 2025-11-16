@@ -60,7 +60,6 @@ public class SlideUpOverlay : MonoBehaviour
 
         // Make sure the final position is exactly the target position
         slidePanel.GetComponent<RectTransform>().localPosition = targetPosition;
-        Debug.Log(selected);
     }
 
     // Optional: To slide the panel down again (hide it)
@@ -111,7 +110,7 @@ public class SlideUpOverlay : MonoBehaviour
 
         // Set the pet name and button text
         PetName.text = Input.text;
-        Adopt.GetComponentInChildren<TMP_Text>().text = $"Adopt\n{Input.text}";
+        Adopt.GetComponentInChildren<TMP_Text>().text = $"Adopt";
 
         confirmPanel.SetActive(true);
     }
@@ -144,7 +143,6 @@ public class SlideUpOverlay : MonoBehaviour
 
     private IEnumerator SendPetDataToServer(string petName, string petType, int studentId)
     {
-        Debug.Log($"Sending data: student_id={studentId}, pet_name={petName}, pet_type={petType}");
         // Create the data object to send
         PetData petData = new PetData
         {
@@ -154,7 +152,6 @@ public class SlideUpOverlay : MonoBehaviour
         };
 
         string insertAPI = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary) + "/pets";
-        Debug.Log($"InsertAPI From SlideUP: {insertAPI}");
         // Convert the data to JSON
         string jsonData = JsonUtility.ToJson(petData);
         UnityWebRequest request = new UnityWebRequest(insertAPI, "POST");
@@ -164,17 +161,6 @@ public class SlideUpOverlay : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Pet successfully created: " + request.downloadHandler.text);
-
-            DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-        }
-        else
-        {
-            Debug.LogError("Error creating pet: " + request.error);
-        }
     }
 
     // Method to cancel the overlay and clear input

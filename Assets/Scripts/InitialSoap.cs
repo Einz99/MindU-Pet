@@ -20,7 +20,6 @@ public class InitialSoap : MonoBehaviour
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From InitialSoap:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // StartCoroutine(FetchSoapData());
     }
@@ -53,9 +52,5 @@ public class InitialSoap : MonoBehaviour
                 Soap.sprite = soaps[PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.soap_type)];
             }
         }
-        else
-        {
-            Debug.LogError("Error fetching soap data: " + request.error);
-        }
-}
+    }
 }

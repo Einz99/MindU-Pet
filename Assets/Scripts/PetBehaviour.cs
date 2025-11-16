@@ -444,7 +444,7 @@ public class PetBehaviour : MonoBehaviour
                 accessoryObjects[i].SetActive(false); // Hide all accessories when eating
             }
         }
-        SM.PlayEatingSoundForDuration(10f);
+        SM.PlayEatingSoundForDuration(8f);
         // Disable buttons during feeding animation
         foreach (var button in buttonsToDisable)
         {
@@ -513,12 +513,15 @@ public class PetBehaviour : MonoBehaviour
     }
 
     // Detect collision with soap object
+    // Replace your collision detection methods with these:
+
+    // Detect when soap enters collision
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("soap"))
         {
-
-            foreach (var acc in accessoryObjects) {
+            foreach (var acc in accessoryObjects) 
+            {
                 acc.SetActive(false);
             }
             foreach (var button in buttonsToDisable)
@@ -528,7 +531,6 @@ public class PetBehaviour : MonoBehaviour
 
             if (!isTouching)
             {
-                isTouching = true;
                 int currentCoins = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetCoins);
                 if (currentCoins <= 2)
                 {
@@ -553,53 +555,74 @@ public class PetBehaviour : MonoBehaviour
                             accessoryObjects[i].SetActive(true);
                         }
                     }
-                
+
                     foreach (var button in buttonsToDisable)
                     {
                         button.SetActive(true);  // Enable any buttons that were disabled
                     }
                     return;
                 }
+
+                isTouching = true;
                 SoapQuantity.SetActive(false);
-                // Start the coroutine to spawn bubbles
-                StartCoroutine(SpawnBubblesRandomlyInCollider());
+                // Start the continuous bubble spawning coroutine
+                StartCoroutine(ContinuouslySpawnBubbles());
             }
         }
     }
 
-    // Coroutine to spawn bubbles at random positions inside the pet's collider
-    private IEnumerator SpawnBubblesRandomlyInCollider()
+    // Detect when soap exits collision
+    private void OnCollisionExit2D(Collision2D collision)
     {
-        // Check if bubble count exceeds the limit
-        if (bubbleCount >= 10) // Limit to 10 bubbles per session
-        {   
-            ShowerButton.SetActive(true);
-            isTouching = false; // Allow for further spawning in future collisions
-            yield break; // Stop the coroutine if the bubble limit is reached
+        if (collision.gameObject.CompareTag("soap"))
+        {
+            isTouching = false; // Stop spawning when soap exits
         }
-        SM.PlayBubble();
+    }
 
-        bubbleCount++; // Increment the bubble count for each spawn session
-
-        // Get the bounds of the pet's collider to know the area
-        Collider2D petCollider = GetComponent<Collider2D>(); // Get the collider of the pet object
+    // Coroutine to continuously spawn bubbles while soap is touching
+    private IEnumerator ContinuouslySpawnBubbles()
+    {
+        // Get the bounds of the pet's collider
+        Collider2D petCollider = GetComponent<Collider2D>();
         Bounds colliderBounds = petCollider.bounds;
 
-        // Spawn 3 bubbles at random positions inside the pet's collider bounds
-        // Generate random positions within the collider's bounds
-        float randomX = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
-        float randomY = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
+        // Keep spawning bubbles while soap is touching and limit hasn't been reached
+        while (isTouching && bubbleCount < 10)
+        {
+            bubbleCount++; // Increment the bubble count
+            
+            if (bubbleCount % 2 == 1)
+            {
+                SM.PlayBubble(); // Plays on: 1, 3, 5, 7, 9
+            }
 
-        // Create a spawn position with the random offsets
-        Vector2 spawnPosition = new Vector2(randomX, randomY);
+            // Generate random positions within the collider's bounds
+            float randomX = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
+            float randomY = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
+            float randomX2 = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
+            float randomY2 = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
 
-        // Instantiate the bubble at the random position
-        Instantiate(bubblePrefabs[Random.Range(0, bubblePrefabs.Length)], spawnPosition, Quaternion.identity);
+            // Create spawn positions with the random offsets
+            Vector2 spawnPosition = new Vector2(randomX, randomY);
+            Vector2 spawnPosition2 = new Vector2(randomX2, randomY2);
 
-        // Wait for 1 second before spawning the next bubble
-        yield return new WaitForSeconds(0.5f); // Adjust the delay between spawns as needed
-        
-        isTouching = false;  // Allow for further spawning in future collisions
+            // Instantiate the bubbles at the random positions
+            Instantiate(bubblePrefabs[Random.Range(0, bubblePrefabs.Length)], spawnPosition, Quaternion.identity);
+            Instantiate(bubblePrefabs[Random.Range(0, bubblePrefabs.Length)], spawnPosition2, Quaternion.identity);
+
+            // Wait for 0.5 seconds before spawning the next set of bubbles
+            // Adjust this delay value to control spawn speed
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        // Once bubble limit is reached, show the shower button
+        if (bubbleCount >= 10)
+        {
+            ShowerButton.SetActive(true);
+        }
+
+        isTouching = false; // Reset the flag
     }
 
     public void OpenShower()
@@ -612,7 +635,7 @@ public class PetBehaviour : MonoBehaviour
     {
         // Trigger the shower animation
         ShowerAnimator.SetTrigger("ShowerOn");
-        SM.PlayShowerSoundForDuration(10f);
+        SM.PlayShowerSoundForDuration(8f);
         // Move and fade the bubbles during this time
         MoveAndFadeBubbles();
     
@@ -664,7 +687,6 @@ public class PetBehaviour : MonoBehaviour
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From PetBehavior:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Construct the API URL for soap usage
         string url = $"{apiUrlSecondary}/pets/{petId}/soapuse";
@@ -689,7 +711,6 @@ public class PetBehaviour : MonoBehaviour
         // Handle the response
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Soap usage updated successfully on the backend.");
             // Update soap quantity in PlayerPrefs
             int currentCoins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, currentCoins - 3);
@@ -819,7 +840,6 @@ public class PetBehaviour : MonoBehaviour
 
         // Construct the URL to your backend API (Make sure the URL is correct)
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
-        Debug.Log($"From bathMenu:\nRootAPI: {apiUrl}\nPetID: {petID}");
         string url = $"{apiUrl}/toggle-pet-sleep";  // Change this to your actual API endpoint
 
         // Create the JSON payload
@@ -836,18 +856,9 @@ public class PetBehaviour : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(jsonToSend);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        Debug.Log("Sending JSON: " + jsonString);
 
         // Send the request and wait for the response
         yield return request.SendWebRequest();
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Successfully updated sleep status on backend.");
-        }
-        else
-        {
-            Debug.LogError($"Error updating sleep status on backend: {request.error}");
-        }
     }
 
     public void FaucetFlow()

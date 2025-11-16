@@ -48,7 +48,6 @@ public class BathMenu : MonoBehaviour
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From bathMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Fetch all soap data from backend
         StartCoroutine(FetchAllSoapData());
@@ -64,7 +63,6 @@ public class BathMenu : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             string responseText = request.downloadHandler.text;
-            Debug.Log("Soap data response: " + responseText);
 
             // Parse the response - it's an array of soap objects
             SoapResponse[] soapData = JsonUtility.FromJson<SoapResponseList>("{\"soapResponses\":" + responseText + "}").soapResponses;
@@ -165,15 +163,6 @@ public class BathMenu : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Active soap updated successfully: " + request.downloadHandler.text);
-        }
-        else
-        {
-            Debug.LogError("Error updating active soap: " + request.error);
-        }
     }
 
     public void showConfirm(int selected)
@@ -214,8 +203,6 @@ public class BathMenu : MonoBehaviour
             string url = $"{apiUrlSecondary}/pets/{petId}/soap";
             string jsonData = JsonUtility.ToJson(new soapPayload { soap_type = soapType });
 
-            Debug.Log("Sending JSON data: " + jsonData);
-
             // Create the HTTP request
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(jsonData);
             UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -240,8 +227,6 @@ public class BathMenu : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Soap updated successfully: " + request.downloadHandler.text);
-
             // Parse the response to get the new quantity
             var response = JsonUtility.FromJson<SoapPurchaseResponse>(request.downloadHandler.text);
             

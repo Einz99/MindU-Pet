@@ -11,16 +11,14 @@ public class StatManager : MonoBehaviour
     public HorizontalPageScroller HPS;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [System.Obsolete]
+
     void Start()
     {
         // Find the HPS if not assigned in Inspector
         if (HPS == null)
         {
             HPS = FindObjectOfType<HorizontalPageScroller>();
-            if (HPS == null)
-            {
-                Debug.LogError("HorizontalPageScroller not found! Make sure it exists in the scene.");
-            }
         }
 
         // Start the stats update coroutine
@@ -66,12 +64,7 @@ public class StatManager : MonoBehaviour
             // ✅ Add null check before calling
             if (HPS != null)
             {
-                Debug.Log($"Updating stats: Playfulness={statFill[0]}, Hunger={statFill[1]}, Hygiene={statFill[2]}, Sleep={statFill[3]}");
                 HPS.UpdateButtonFill(statFill);
-            }
-            else
-            {
-                Debug.LogError("HPS is null! Cannot update button fills.");
             }
 
             yield return new WaitForSeconds(600f); // 10 minutes

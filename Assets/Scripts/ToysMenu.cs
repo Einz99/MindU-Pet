@@ -29,26 +29,26 @@ public class ToysMenu : MonoBehaviour
     
     private List<string> toys = new List<string>();
 
-    private void Start() {
+    private void Start() 
+    {
         string petKey = PlayerPrefKeys.PetPrefix;
-        // Retrieve the API URL and pet ID from PlayerPrefs
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        
-        Debug.Log($"From ToysMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
-        // Start the coroutine to get toys data from the API
-        StartCoroutine(GetToysData());
 
-        bool status;
+        // Initialize toggle status from PlayerPrefs
         for (int i = 0; i < toggleStatus.Length; i++)
         {
-            status = PlayerPrefs.GetInt(PlayerPrefKeys.toyPrefix + i) == 1;
-            toggleStatus[i] = status;
-            Toggles[i].GetComponent<Toggle>().isOn = status;
+            toggleStatus[i] = PlayerPrefs.GetInt(PlayerPrefKeys.toyPrefix + i, 0) == 1;
+            // Only set the toggle if it's active (meaning the toy is owned)
+            if (Toggles[i].activeInHierarchy)
+            {
+                Toggles[i].GetComponent<Toggle>().isOn = toggleStatus[i];
+            }
         }
-        
+
+        StartCoroutine(GetToysData());
     }
 
     private IEnumerator GetToysData() {
@@ -60,7 +60,6 @@ public class ToysMenu : MonoBehaviour
             if (webRequest.result == UnityWebRequest.Result.Success) {
                 // Parse the response
                 string jsonResponse = webRequest.downloadHandler.text;
-                Debug.Log(jsonResponse);
                 List<string> toys = ParseToysData(jsonResponse);  // Parse the toy data
 
                 // Update the UI based on the returned toys
@@ -89,7 +88,6 @@ public class ToysMenu : MonoBehaviour
     // Method to update the UI based on the available toys
     private void UpdateUIBasedOnToys(List<string> toys)
     {
-        Debug.Log("Toys List: " + string.Join(", ", toys));  // Log the toys list to check its contents
 
         for (int i = 0; i < 6; i++)
         {
@@ -104,7 +102,6 @@ public class ToysMenu : MonoBehaviour
                 {
                     i--;
                     PriceTag[i].SetActive(false); // Show the price tag if the toy is available
-                    Debug.Log("price tag: " + i);
                     i++;
                 }
 
@@ -202,7 +199,6 @@ public class ToysMenu : MonoBehaviour
                 SM.PlayCoinSound(); // Play sound on successful transaction
                 TogglingToys(selectedToyIndex);
                 // Show success message (can be customized based on your requirements)
-                Debug.Log($"Successfully purchased {response.toy_type} for {response.new_coins} coins");
 
                 // Optionally, you can update the player's toy UI or handle the UI transition here
                 // For example, update the toggle and price tag display based on new toy data
@@ -225,9 +221,21 @@ public class ToysMenu : MonoBehaviour
     
     public void TogglingToys(int index)
     {
-        bool status = toggleStatus[index];
-        PlayerPrefs.SetInt(PlayerPrefKeys.toyPrefix + index, !status ? 1 : 0);
-        Toys[index].SetActive(!status);
+        // Get current toggle state
+        bool currentStatus = toggleStatus[index];
+
+        // Flip the status
+        bool newStatus = !currentStatus;
+
+        // Save the new status
+        toggleStatus[index] = newStatus;
+        PlayerPrefs.SetInt(PlayerPrefKeys.toyPrefix + index, newStatus ? 1 : 0);
+
+        // Update the UI
+        Toggles[index].GetComponent<Toggle>().isOn = newStatus;
+        Toys[index].SetActive(newStatus);
+
+        // Save changes
         PlayerPrefs.Save();
     }
 }

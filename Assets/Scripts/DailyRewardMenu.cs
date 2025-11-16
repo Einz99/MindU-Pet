@@ -67,7 +67,6 @@ public class DailyRewardMenu : MonoBehaviour
         {
             // First time login
             currentStreak = 1;
-            Debug.Log("🎉 First login! Day 1");
         }
         else
         {
@@ -85,24 +84,17 @@ public class DailyRewardMenu : MonoBehaviour
                 if (currentStreak > 7)
                 {
                     currentStreak = 1;
-                    Debug.Log("🔄 Completed 7 days! Restarting from Day 1");
-                }
-                else
-                {
-                    Debug.Log($"✅ Consecutive login! Day {currentStreak}");
                 }
             }
             else if (daysDifference == 0)
             {
                 // Same day (already logged in today)
                 currentStreak = PlayerPrefs.GetInt(LOGIN_STREAK_KEY, 1);
-                Debug.Log($"⏭️ Already logged in today. Day {currentStreak}");
             }
             else
             {
                 // Streak broken (missed a day)
                 currentStreak = 1;
-                Debug.Log("💔 Streak broken! Restarting from Day 1");
             }
         }
         
@@ -119,11 +111,6 @@ public class DailyRewardMenu : MonoBehaviour
         if (rewardImage != null && RewardImg != null && dayIndex >= 0 && dayIndex < RewardImg.Length)
         {
             rewardImage.sprite = RewardImg[dayIndex];
-            Debug.Log($"🎁 Displaying reward sprite for Day {currentStreak}");
-        }
-        else
-        {
-            Debug.LogWarning($"⚠️ RewardImg array doesn't have sprite for Day {currentStreak}");
         }
     }
 
@@ -171,7 +158,6 @@ public class DailyRewardMenu : MonoBehaviour
     {
         if (petId == 0 || string.IsNullOrEmpty(apiUrlSecondary))
         {
-            Debug.LogError("❌ Pet ID or API URL not found!");
             yield break;
         }
 
@@ -192,7 +178,6 @@ public class DailyRewardMenu : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"✅ Daily reward claimed: {request.downloadHandler.text}");
 
                 // Parse response
                 DailyRewardResponse response = JsonUtility.FromJson<DailyRewardResponse>(request.downloadHandler.text);
@@ -210,16 +195,10 @@ public class DailyRewardMenu : MonoBehaviour
                     PlayerPrefs.SetString(LAST_LOGIN_DATE_KEY, todayDate);
                     PlayerPrefs.SetString(LAST_DAILY_REWARD_KEY, todayDate);
                     PlayerPrefs.Save();
-
-                    Debug.Log($"🎉 Reward claimed! Type: {response.data.reward_type}, Amount: {response.data.reward_amount}");
                     
                     // Close the menu
                     dailyRewardPanel.SetActive(false);
                 }
-            }
-            else
-            {
-                Debug.LogError($"❌ Failed to claim daily reward: {request.error}");
             }
         }
     }

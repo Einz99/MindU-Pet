@@ -21,6 +21,7 @@ public class GlassesMenu : MonoBehaviour
     public TMP_Text[] Coins;
     public SoundManager SM;
     public GameObject Glasses; // Add this to show/hide glasses visual
+    private bool isTogglingProgrammatically = false;
 
     // Glasses names
     private string[] glassesName = new string[] { "BLACK GLASSES", "CATEYE GLASSES", "RIZZ GLASSES", "FUNNY GLASSES" };
@@ -35,7 +36,6 @@ public class GlassesMenu : MonoBehaviour
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From GlassesMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Call the method to fetch accessories
         StartCoroutine(GetAccessories());
@@ -56,7 +56,6 @@ public class GlassesMenu : MonoBehaviour
             {
                 // Parse the response if successful
                 string responseText = request.downloadHandler.text;
-                Debug.Log("Response: " + responseText);
 
                 // Convert the response into a structured object (this depends on your JSON structure).
                 Accessory[] accessories = JsonUtility.FromJson<AccessoryList>("{\"items\":" + responseText + "}").items;
@@ -64,8 +63,6 @@ public class GlassesMenu : MonoBehaviour
                 // Check if no accessories are returned
                 if (accessories == null || accessories.Length == 0)
                 {
-                    // Handle the case where there are no accessories
-                    Debug.Log("No accessories found.");
                     
                     // Reset all toggles and price panels to the default state (price panels active, toggles inactive)
                     HideAllToggles();
@@ -92,7 +89,6 @@ public class GlassesMenu : MonoBehaviour
                         int toggleIndex = accessory.accessory_id - 5;  // Matching 0-based index for toggles array (5 -> 0, 6 -> 1, etc.)
                         int pricePanelIndex = accessory.accessory_id - 5;  // Matching 0-based index for price panel array (5 -> 0, 6 -> 1, etc.)
 
-                        Debug.Log(accessory.accessory_category);
                         if (accessory.accessory_category != null) // This indicates the glasses were bought
                         {
                             // Show the toggle for this glasses and hide the price panel
@@ -127,7 +123,6 @@ public class GlassesMenu : MonoBehaviour
         // Check if the accessory (glasses) has already been bought
         if (bought[glasses])
         {
-            Debug.Log("This accessory has already been bought.");
             return;  // Exit if the accessory is already bought
         }
 
@@ -161,7 +156,6 @@ public class GlassesMenu : MonoBehaviour
             // Sync with the backend
             string url = $"{apiUrlSecondary}/pets/{petId}/buyAccessory"; // Use the secondary API
             string jsonData = JsonUtility.ToJson(new AccPayload { accessory_id = selected + 5 }); // Glasses IDs are 5-8
-            Debug.Log(url);
             
             // Create the HTTP request
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -185,39 +179,55 @@ public class GlassesMenu : MonoBehaviour
     private IEnumerator SendRequest(UnityWebRequest request, int currentCoins)
     {
         yield return request.SendWebRequest();
-
+    
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Accessory purchased successfully: " + request.downloadHandler.text);
-            string petkey = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix);
-            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetEyes, selected + 5);  // Store glasses selection in PlayerPrefs
-            PlayerPrefs.Save();
-            Glasses.SetActive(true);
+            string petkey = PlayerPrefKeys.PetPrefix;
             
-            // Mark the accessory as bought
             bought[selected] = true;
-
-            // Deactivate all toggles and show the selected one
-            DeactivateAllToggles();
+    
+            isTogglingProgrammatically = true;
+    
+            for (int i = 0; i < toggles.Length; i++)
+            {
+                if (toggles[i] != null)
+                {
+                    Toggle toggle = toggles[i].GetComponent<Toggle>();
+                    if (toggle != null)
+                    {
+                        toggle.isOn = false;
+                        toggle.interactable = true;
+                    }
+                }
+            }
+            
             toggles[selected].SetActive(true);
-
-            // Hide the price panel for the purchased accessory
+            
+            Toggle purchasedToggle = toggles[selected].GetComponent<Toggle>();
+            if (purchasedToggle != null)
+            {
+                purchasedToggle.isOn = true;
+                purchasedToggle.interactable = true;
+            }
+    
+            isTogglingProgrammatically = false;
+            
             pricePanel[selected].SetActive(false);
-
-            // Enable the purchased toggle (set it to "on")
-            OnToggle(selected);
-
-            // Update the displayed coin amount
-            string petKey2 = PlayerPrefKeys.PetPrefix;
+    
+            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetEyes, selected + 5);
+            PlayerPrefs.Save();
+            StartCoroutine(UpdateAccessoryOnServer(selected + 5));
+            
+            Glasses.SetActive(true);
+    
             foreach (var coin in Coins)
             {
-                coin.text = PlayerPrefs.GetInt(petKey2 + PlayerPrefKeys.PetCoins).ToString();
+                coin.text = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.PetCoins).ToString();
             }
         }
         else
         {
             Debug.LogError("Error purchasing accessory: " + request.error);
-            // Revert coin deduction if API call fails
             string petKey = PlayerPrefKeys.PetPrefix;
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins);
             PlayerPrefs.Save();
@@ -232,12 +242,18 @@ public class GlassesMenu : MonoBehaviour
 
     private void DeactivateAllToggles()
     {
-        // Deactivate all toggles and make them interactable
+        // Turn off all toggles but keep bought ones visible (just unchecked)
         foreach (var toggle in toggles)
         {
-            toggle.SetActive(false);
-            toggle.GetComponent<Toggle>().interactable = true;  // Ensure all toggles are interactable again
-            toggle.GetComponent<Toggle>().isOn = false;  // Make sure all toggles are turned off
+            if (toggle != null)
+            {
+                Toggle toggleComponent = toggle.GetComponent<Toggle>();
+                if (toggleComponent != null)
+                {
+                    toggleComponent.isOn = false;
+                    toggleComponent.interactable = true;
+                }
+            }
         }
     }
 
@@ -262,6 +278,9 @@ public class GlassesMenu : MonoBehaviour
     // Called when a toggle is clicked
     public void OnToggle(int index)
     {
+        // Ignore programmatic toggle changes
+        if (isTogglingProgrammatically) return;
+
         if (toggles[index] == null)
         {
             Debug.LogError($"Toggle at index {index} is null!");
@@ -269,51 +288,61 @@ public class GlassesMenu : MonoBehaviour
         }
 
         Toggle currentToggle = toggles[index].GetComponent<Toggle>();
-        
+
         if (currentToggle == null)
         {
             Debug.LogError($"Toggle component at index {index} is null!");
             return;
         }
-        
+
         string petKey = PlayerPrefKeys.PetPrefix;
-        
-        // If the toggle is turned off (i.e., the accessory is being removed)
+
+        // If the toggle is turned off (removing the accessory)
         if (!currentToggle.isOn)
         {
             // Remove the accessory
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetEyes, 0);
             PlayerPrefs.Save();
-            Glasses.SetActive(true);
-            
+
+            // Hide glasses when toggle is OFF
+            Glasses.SetActive(false);
+
             // Call the backend API to remove the accessory (set to 0)
             StartCoroutine(UpdateAccessoryOnServer(0));
         }
         else
         {
+            // Set flag to prevent other toggles from triggering callbacks
+            isTogglingProgrammatically = true;
+
             // Turn off all other toggles
             for (int i = 0; i < toggles.Length; i++)
             {
                 if (i == index) continue;
 
-                if (toggles[i] != null)
+                if (toggles[i] != null && toggles[i].activeInHierarchy)
                 {
                     Toggle otherToggle = toggles[i].GetComponent<Toggle>();
                     if (otherToggle != null)
                     {
-                        otherToggle.isOn = false;
+                        otherToggle.isOn = false; // Won't trigger OnToggle
                     }
                 }
             }
-            
+
+            // Reset flag
+            isTogglingProgrammatically = false;
+
             // Set the selected accessory (5-8 for glasses)
             int accessoryId = index + 5;
-            
+
             // Update PlayerPrefs
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetEyes, accessoryId);
             PlayerPrefs.Save();
-            Glasses.SetActive(false);
-            
+
+            // Show glasses when toggle is ON
+            Glasses.SetActive(true);
+
             // Call the backend API to add the accessory
             StartCoroutine(UpdateAccessoryOnServer(accessoryId));
         }
@@ -330,7 +359,6 @@ public class GlassesMenu : MonoBehaviour
             accessory_category = "glasses" 
         });
 
-        Debug.Log($"Updating accessory on server: ID={accessory_id}, URL={url}");
 
         // Create the UnityWebRequest
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -342,16 +370,5 @@ public class GlassesMenu : MonoBehaviour
 
         // Send the request and wait for a response
         yield return request.SendWebRequest();
-
-        // Handle the response
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Accessory updated successfully: " + request.downloadHandler.text);
-        }
-        else
-        {
-            Debug.LogError("Error updating accessory: " + request.error);
-            // Optionally revert the PlayerPrefs change if the API call fails
-        }
     }
 }

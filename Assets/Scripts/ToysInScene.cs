@@ -8,7 +8,6 @@ public class ToysInScene : MonoBehaviour
         for (int i = 0; i < Toys.Length; i++)
         {
             Toys[i].SetActive(PlayerPrefs.GetInt(PlayerPrefKeys.toyPrefix + i, i == 0 ? 1 : 0) == 1);
-            Debug.Log(PlayerPrefs.GetInt(PlayerPrefKeys.toyPrefix + i, 0));
         }
     }
 }

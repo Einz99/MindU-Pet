@@ -52,23 +52,17 @@ public class DataManager : MonoBehaviour
         {
             StartCoroutine(HandlePetDataRequest());
         }
-        else
-        {
-            Debug.LogWarning("⚠️ Waiting for data from UnityDataReceiver...");
-        }
     }
     
     public void StartDataFetch()
     {
         if (studentId > 0 && !string.IsNullOrEmpty(apiUrlSecondary))
         {
-            Debug.Log("✅ Data received! Starting pet data fetch...");
             
             // Load saved data from AsyncStorage if in WebGL
             if (isWebGL && StorageBridge.Instance != null)
             {
                 StorageBridge.Instance.LoadAllData(() => {
-                    Debug.Log("✅ AsyncStorage data loaded");
                     StartCoroutine(HandlePetDataRequest());
                 });
             }
@@ -76,10 +70,6 @@ public class DataManager : MonoBehaviour
             {
                 StartCoroutine(HandlePetDataRequest());
             }
-        }
-        else
-        {
-            Debug.LogError("❌ Cannot start fetch - missing student ID or API URL");
         }
     }
     
@@ -99,8 +89,6 @@ public class DataManager : MonoBehaviour
         studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 46);
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.2:3000");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
-
-        Debug.Log($"Student ID: {studentId}, Primary API URL: {apiUrl}, Secondary API URL: {apiUrlSecondary}");
     }
 
     // Coroutine to get pet data and handle the loading screen and scene transitions
@@ -115,10 +103,6 @@ public class DataManager : MonoBehaviour
         
         string petsEndpoint = apiUrlSecondary + "/pets/" + studentId;
         
-        Debug.Log("=== API REQUEST DEBUG ===");
-        Debug.Log("Full Endpoint: " + petsEndpoint);
-        Debug.Log("Expected: http://192.168.1.2:3000/api/pets/46");
-        
         // Wait for the specified loading screen duration (5-10 seconds)
         yield return new WaitForSeconds(loadingScreenDuration);
 
@@ -128,19 +112,13 @@ public class DataManager : MonoBehaviour
         request.certificateHandler = new AcceptAllCertificates();
         request.timeout = 10;
         
-        Debug.Log("Sending request to: " + petsEndpoint);
-        
         yield return request.SendWebRequest(); // Wait for the request to finish
         
-        Debug.Log("Request completed!");
-        Debug.Log("Result: " + request.result);
-        Debug.Log("Response Code: " + request.responseCode);
         
         if (request.result == UnityWebRequest.Result.Success)
         {
             // Parse the JSON response
             string responseText = request.downloadHandler.text;
-            Debug.Log("SUCCESS! Response: " + responseText);
 
             try
             {
@@ -149,7 +127,6 @@ public class DataManager : MonoBehaviour
                 // Check if the response was successfully parsed
                 if (petsWrapper == null)
                 {
-                    Debug.LogError("Failed to parse pet data.");
                     request.certificateHandler.Dispose();
                     request.Dispose();
                     yield break;
@@ -157,7 +134,6 @@ public class DataManager : MonoBehaviour
 
                 if (loadingScreen != null && petsWrapper.shouldGoToAdoption)
                 {
-                    Debug.Log("No pet found - going to adoption");
                     if (loadingScreen != null || CreationScreen != null)
                     {
                         // No pets found, show the Pet Creation Screen
@@ -167,51 +143,42 @@ public class DataManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("Pet found! Saving data and loading scene...");
                     // Pet data found, save it to PlayerPrefs and go to the pet scene
                     SavePetData(petsWrapper.pet);
 
 
                     if (loadingScreen != null)
                     {
-                        bool IsWatchTutorial = PlayerPrefs.GetInt(PlayerPrefKeys.IsWatchTutorial, 0) == 1;
-                        if (!IsWatchTutorial)
-                        {
-                            VideoOrSkipScreen.SetActive(true);
-                            loadingScreen.SetActive(false);
-                        } else {
-                            Debug.Log("Returning user - going to Pet Scene");
-                            ShowPetScene();
-                        }
+                        ShowPetScene();
+                        // bool IsWatchTutorial = PlayerPrefs.GetInt(PlayerPrefKeys.IsWatchTutorial, 0) == 1;
+                        // if (!IsWatchTutorial)
+                        // {
+                        //     VideoOrSkipScreen.SetActive(true);
+                        //     loadingScreen.SetActive(false);
+                        // } else {
+                        //     Debug.Log("Returning user - going to Pet Scene");
+                        //     ShowPetScene();
+                        // }
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogError("Error parsing the response: " + e.Message);
+                
             }
         }
         else
         {
-            Debug.LogError("=== REQUEST FAILED ===");
-            Debug.LogError("Error: " + request.error);
-            Debug.LogError("Response Code: " + request.responseCode);
-            Debug.LogError("URL: " + petsEndpoint);
             
             // If the status is 404, handle it here
             if (request.responseCode == 404)
             {
-                Debug.Log("404 - Showing creation screen");
                 if (loadingScreen != null || CreationScreen != null)
                 {
                     // Show the Pet Creation Screen
                     loadingScreen.SetActive(false);
                     CreationScreen.SetActive(true);
                 }
-            }
-            else
-            {
-                Debug.LogError("Network error fetching pet data: " + request.error);
             }
         }
         
@@ -241,7 +208,6 @@ public class DataManager : MonoBehaviour
         {
             // Optionally: Show progress (progress is a value between 0 and 0.9)
             float progress = asyncOperation.progress;
-            Debug.Log("Loading progress: " + progress);
 
             // When the loading reaches 90% or more, allow the scene to activate
             if (progress >= 0.9f)
@@ -258,7 +224,6 @@ public class DataManager : MonoBehaviour
     private void SavePetData(Pet pets)
     {
         string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
-        Debug.Log("Pet Data is Saved");
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetID, pets.id);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetStudentID, pets.student_id);
         PlayerPrefs.SetString(petKey + PlayerPrefKeys.PetName, pets.pet_name);
@@ -315,11 +280,6 @@ public class DataManager : MonoBehaviour
         this.apiUrlSecondary = secondaryAPI + "api"; // Update instance variable
         PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, this.apiUrlSecondary);
         PlayerPrefs.Save();
-        
-        Debug.Log($"✅ Data saved successfully!");
-        Debug.Log($"API URL: '{apiUrl}'");
-        Debug.Log($"Secondary: '{this.apiUrlSecondary}'");
-        Debug.Log($"Student ID: {studentId}");
         
         // NOW trigger the data fetch
         StartDataFetch();

@@ -28,15 +28,9 @@ public class ExitButton : MonoBehaviour
     
     private void OnExitButtonClicked()
     {
-        Debug.Log("🚪 Exit button clicked");
-        
         if (StorageBridge.Instance != null)
         {
             StorageBridge.Instance.ExitGame();
-        }
-        else
-        {
-            Debug.LogError("❌ StorageBridge instance not found!");
         }
     }
     

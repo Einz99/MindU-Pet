@@ -82,12 +82,9 @@ public class HorizontalPageScroller : MonoBehaviour
         // Get the last reward date from PlayerPrefs
         string lastRewardDate = PlayerPrefs.GetString(LAST_DAILY_REWARD_KEY, "");
 
-        Debug.Log($"🎁 Today: {todayDate}, Last Reward: {lastRewardDate}");
-
         // If no date exists or it's not today, show daily rewards
         if (string.IsNullOrEmpty(lastRewardDate) || lastRewardDate != todayDate)
         {
-            Debug.Log("✨ Showing Daily Rewards!");
             if (DailyReward != null)
             {
                 DailyReward.SetActive(true);
@@ -95,7 +92,6 @@ public class HorizontalPageScroller : MonoBehaviour
         }
         else
         {
-            Debug.Log("⏭️ Daily reward already claimed today");
             if (DailyReward != null)
             {
                 DailyReward.SetActive(false);
@@ -330,10 +326,8 @@ public class HorizontalPageScroller : MonoBehaviour
     {
         if (newValues.Length != ButtonFills.Length)
         {
-            Debug.LogError($"Array length mismatch! Expected {ButtonFills.Length}, got {newValues.Length}");
             return;
         }
-        Debug.Log("I reach it");
         // ✅ Add null checks
         for (int i = 0; i < ButtonFills.Length; i++)
         {

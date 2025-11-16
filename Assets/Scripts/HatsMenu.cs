@@ -22,21 +22,42 @@ public class HatsMenu : MonoBehaviour
     private string[] hatsName = new string[] { "CAP", "COWBOY", "WITCH", "BEANIE" };
     public SoundManager SM;
     public GameObject Hat;
+    private bool isTogglingProgrammatically = false;
 
     private void Start()
     {
         // Initialize the bought array to false (no accessories are bought initially)
-        bought = new bool[4];  // Assuming we have 4 hats (adjust size based on your actual accessory count)
-        
+        bought = new bool[4];
+
         // Retrieve API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From bathMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
+
+        // Add listeners to toggles to prevent them from being called during setup
+        for (int i = 0; i < toggles.Length; i++)
+        {
+            int index = i; // Capture the index for the lambda
+            Toggle toggle = toggles[i].GetComponent<Toggle>();
+            if (toggle != null)
+            {
+                // Remove any existing listeners first
+                toggle.onValueChanged.RemoveAllListeners();
+                // Add the listener
+                toggle.onValueChanged.AddListener((isOn) => OnToggleValueChanged(index, isOn));
+            }
+        }
 
         // Call the method to fetch accessories
         StartCoroutine(GetAccessories());
+    }
+
+    private void OnToggleValueChanged(int index, bool isOn)
+    {
+        // Only process if the toggle was interacted with by the user
+        // This prevents automatic calls during setup
+        OnToggle(index);
     }
 
     // Coroutine to fetch accessories for the pet
@@ -54,14 +75,11 @@ public class HatsMenu : MonoBehaviour
             {
                 // Parse the response if successful
                 string responseText = request.downloadHandler.text;
-                Debug.Log(responseText);
                 // Convert the response into a structured object (this depends on your JSON structure).
                 Accessory[] accessories = JsonUtility.FromJson<AccessoryList>("{\"items\":" + responseText + "}").items;
                 // Check if no accessories are returned
                 if (accessories == null || accessories.Length == 0)
                 {
-                    // Handle the case where there are no accessories
-                    Debug.Log("No accessories found.");
                     
                     // Reset all toggles and price panels to the default state (price panels active, toggles inactive)
                     HideAllToggles();
@@ -87,7 +105,6 @@ public class HatsMenu : MonoBehaviour
                         // Determine the toggle and price panel based on the accessory_id
                         int toggleIndex = accessory.accessory_id - 1;  // Matching 0-based index for toggles array
                         int pricePanelIndex = accessory.accessory_id - 1;  // Matching 0-based index for price panel array
-                        Debug.Log(accessory.accessory_category);
                         if (accessory.accessory_category != null)  // This indicates the accessory is bought
                         {
                             toggles[toggleIndex].SetActive(true);
@@ -116,7 +133,6 @@ public class HatsMenu : MonoBehaviour
     // Check if the accessory has already been bought
     if (bought[hat])
     {
-        Debug.Log("This accessory has already been bought.");
         return;  // Exit if the accessory is already bought
     }
 
@@ -150,7 +166,6 @@ public class HatsMenu : MonoBehaviour
             // Sync with the backend
             string url = $"{apiUrlSecondary}/pets/{petId}/buyAccessory"; // Use the secondary API
             string jsonData = JsonUtility.ToJson(new AccPayload { accessory_id = selected + 1 }); // Assuming `selected` corresponds to the accessory ID
-            Debug.Log(url);
             // Create the HTTP request
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(jsonData);
             UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -173,38 +188,65 @@ public class HatsMenu : MonoBehaviour
     private IEnumerator SendRequest(UnityWebRequest request, int currentCoins)
     {
         yield return request.SendWebRequest();
-
+    
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Accessory purchased successfully: " + request.downloadHandler.text);
-            string petkey = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix);
-            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetHead, selected + 1);
-            PlayerPrefs.Save();
-            Hat.SetActive(true);
+            string petkey = PlayerPrefKeys.PetPrefix;
+            
             // Mark the accessory as bought
             bought[selected] = true;
-
-            // Deactivate all toggles and show the selected one
-            DeactivateAllToggles();
+    
+            // Set flag before modifying toggles
+            isTogglingProgrammatically = true;
+    
+            // Turn off all other toggles (without triggering their callbacks)
+            for (int i = 0; i < toggles.Length; i++)
+            {
+                if (toggles[i] != null)
+                {
+                    Toggle toggle = toggles[i].GetComponent<Toggle>();
+                    if (toggle != null)
+                    {
+                        toggle.isOn = false;
+                        toggle.interactable = true;
+                    }
+                }
+            }
+            
+            // Show and enable the purchased toggle
             toggles[selected].SetActive(true);
-
-            // Hide the price panel for the purchased accessory
+            
+            // Set isOn for purchased toggle
+            Toggle purchasedToggle = toggles[selected].GetComponent<Toggle>();
+            if (purchasedToggle != null)
+            {
+                purchasedToggle.isOn = true;
+                purchasedToggle.interactable = true;
+            }
+    
+            // Reset flag - now user interactions will work
+            isTogglingProgrammatically = false;
+            
+            // Hide the price panel
             pricePanel[selected].SetActive(false);
-
-            // Enable the purchased toggle (set it to "on")
-            OnToggle(selected);
-
-            // Update the displayed coin amount
-            string petKey2 = PlayerPrefKeys.PetPrefix;
+    
+            // Save to PlayerPrefs and update server
+            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetHead, selected + 1);
+            PlayerPrefs.Save();
+            StartCoroutine(UpdateAccessoryOnServer(selected + 1));
+            
+            // Show the accessory visual
+            Hat.SetActive(true);
+    
+            // Update coins display
             foreach (var coin in Coins)
             {
-                coin.text = PlayerPrefs.GetInt(petKey2 + PlayerPrefKeys.PetCoins).ToString();
+                coin.text = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.PetCoins).ToString();
             }
         }
         else
         {
             Debug.LogError("Error purchasing accessory: " + request.error);
-            // Revert coin deduction if API call fails
             string petKey = PlayerPrefKeys.PetPrefix;
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins);
             PlayerPrefs.Save();
@@ -219,14 +261,21 @@ public class HatsMenu : MonoBehaviour
     
     private void DeactivateAllToggles()
     {
-        // Deactivate all toggles and make them interactable
+        // Turn off all toggles but keep bought ones active (visible but unchecked)
         foreach (var toggle in toggles)
         {
-            toggle.SetActive(false);
-            toggle.GetComponent<Toggle>().interactable = true;  // Ensure all toggles are interactable again
-            toggle.GetComponent<Toggle>().isOn = false;  // Make sure all toggles are turned off
+            if (toggle != null)
+            {
+                Toggle toggleComponent = toggle.GetComponent<Toggle>();
+                if (toggleComponent != null)
+                {
+                    toggleComponent.isOn = false;
+                    toggleComponent.interactable = true;
+                }
+            }
         }
     }
+
     
     // Hide all toggles
     private void HideAllToggles()
@@ -245,64 +294,78 @@ public class HatsMenu : MonoBehaviour
             panel.SetActive(true);
         }
     }
-    
+
     // Called when a toggle is clicked
     public void OnToggle(int index)
-{
-    if (toggles[index] == null)
     {
-        Debug.LogError($"Toggle at index {index} is null!");
-        return;
-    }
+        // Ignore programmatic toggle changes
+        if (isTogglingProgrammatically) return;
 
-    Toggle currentToggle = toggles[index].GetComponent<Toggle>();
-    
-    if (currentToggle == null)
-    {
-        Debug.LogError($"Toggle component at index {index} is null!");
-        return;
-    }
-    
-    string petKey = PlayerPrefKeys.PetPrefix;
-    
-    // If the toggle is turned off (i.e., the accessory is being removed)
-    if (!currentToggle.isOn)
-    {
-        // Remove the accessory
-        PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHead, 0);
-        PlayerPrefs.Save();
-            Hat.SetActive(true);
-        // Call the backend API to remove the accessory (set to 0)
-        StartCoroutine(UpdateAccessoryOnServer(0));
-    }
-    else
-    {
-        // Turn off all other toggles
-        for (int i = 0; i < toggles.Length; i++)
+        if (toggles[index] == null)
         {
-            if (i == index) continue;
+            Debug.LogError($"Toggle at index {index} is null!");
+            return;
+        }
 
-                if (toggles[i] != null)
+        Toggle currentToggle = toggles[index].GetComponent<Toggle>();
+
+        if (currentToggle == null)
+        {
+            Debug.LogError($"Toggle component at index {index} is null!");
+            return;
+        }
+
+        string petKey = PlayerPrefKeys.PetPrefix;
+
+        // If the toggle is turned off (removing the accessory)
+        if (!currentToggle.isOn)
+        {
+            // Remove the accessory
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHead, 0);
+            PlayerPrefs.Save();
+
+            // Hide hat when toggle is OFF
+            Hat.SetActive(false);
+
+            // Call the backend API to remove the accessory (set to 0)
+            StartCoroutine(UpdateAccessoryOnServer(0));
+        }
+        else
+        {
+            // Set flag to prevent other toggles from triggering callbacks
+            isTogglingProgrammatically = true;
+
+            // Turn off all other toggles
+            for (int i = 0; i < toggles.Length; i++)
+            {
+                if (i == index) continue;
+
+                if (toggles[i] != null && toggles[i].activeInHierarchy)
                 {
                     Toggle otherToggle = toggles[i].GetComponent<Toggle>();
                     if (otherToggle != null)
                     {
-                        otherToggle.isOn = false;
+                        otherToggle.isOn = false; // This won't trigger OnToggle because of the flag
                     }
                 }
-                
+            }
+
+            // Reset flag
+            isTogglingProgrammatically = false;
+
+            // Set the selected accessory (1-4 for hats)
+            int accessoryId = index + 1;
+
+            // Update PlayerPrefs
+            PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHead, accessoryId);
+            PlayerPrefs.Save();
+
+            // Show hat when toggle is ON
+            Hat.SetActive(true);
+
+            // Call the backend API to add the accessory
+            StartCoroutine(UpdateAccessoryOnServer(accessoryId));
         }
-        
-        // Set the selected accessory (1-4 for hats)
-        int accessoryId = index + 1;
-        
-        // Update PlayerPrefs
-        PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetHead, accessoryId);
-        PlayerPrefs.Save();
-        Hat.SetActive(false);
-        // Call the backend API to add the accessory
-        StartCoroutine(UpdateAccessoryOnServer(accessoryId));
-    }
     }
 
     private IEnumerator UpdateAccessoryOnServer(int accessory_id)
@@ -316,7 +379,6 @@ public class HatsMenu : MonoBehaviour
             accessory_category = "hat" 
         });
 
-        Debug.Log($"Updating accessory on server: ID={accessory_id}, URL={url}");
 
         // Create the UnityWebRequest
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -328,17 +390,6 @@ public class HatsMenu : MonoBehaviour
 
         // Send the request and wait for a response
         yield return request.SendWebRequest();
-
-        // Handle the response
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Accessory updated successfully: " + request.downloadHandler.text);
-        }
-        else
-        {
-            Debug.LogError("Error updating accessory: " + request.error);
-            // Optionally revert the PlayerPrefs change if the API call fails
-        }
     }
 }
 

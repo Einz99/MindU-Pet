@@ -31,7 +31,6 @@ public class FoodMenu : MonoBehaviour
     public void showConfirm(bool isPack)
     {
         string pet_type = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetType);
-        Debug.Log(pet_type);
         ConfirmPanel.SetActive(true);
         this.isPack = isPack;
         if (isPack)
@@ -76,7 +75,6 @@ public class FoodMenu : MonoBehaviour
     string petKey = PlayerPrefKeys.PetPrefix;
     int currentCoins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
     int currentFoodStack = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetFoodStack);
-    Debug.Log(currentCoins);
     
     // Ensure that the increment value is valid
     if (increment != 1 && increment != 5)
@@ -100,7 +98,6 @@ public class FoodMenu : MonoBehaviour
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From FoodMenu:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Construct the API URL for updating food
         string url = $"{apiUrlSecondary}/pets/{petId}/food";
@@ -124,7 +121,6 @@ public class FoodMenu : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Food updated successfully: " + request.downloadHandler.text);
             PlayerPrefs.Save();
             int foodquantity = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetFoodStack);
             foreach (var text in Foodtext)
@@ -184,7 +180,6 @@ public class FoodMenu : MonoBehaviour
         string petKey = PlayerPrefKeys.PetPrefix;
 
         string pet_type = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetType);
-        Debug.Log(pet_type);
 
         if (pet_type == "cat_1" || pet_type == "cat_2" || pet_type == "cat_3")
         {

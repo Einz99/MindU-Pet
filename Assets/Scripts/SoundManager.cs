@@ -6,7 +6,7 @@ public class SoundManager : MonoBehaviour
     // Reference to the AudioSource component
     private AudioSource audioSource;
     public AudioSource BGXSource;
-    public AudioClip[] backgroundMusic;
+    public AudioClip[] backgroundMusic; // [0] = default, [1] = alternate
     public AudioClip[] dogPant;
     public AudioClip boomerang; // still not used
     public AudioClip ballBounce; // same
@@ -23,39 +23,79 @@ public class SoundManager : MonoBehaviour
 
     private string petKey = "PetPrefix"; // Unique pet key, assuming only one pet
     private string pet_type;
+    private int currentBGMIndex = 0; // Track which BGM is playing (0 = default, 1 = alternate)
 
     void Start()
     {
         // Get the AudioSource component attached to this GameObject
         audioSource = GetComponent<AudioSource>();
 
-        // Start the random background music coroutine
-        StartCoroutine(PlayRandomBackgroundMusic());
-
         // Get the pet type from PlayerPrefs
         pet_type = PlayerPrefs.GetString(petKey + "PetType");
+
+        // Play the default background music (first one in array)
+        PlayBGM(0);
 
         // Start the random sound play coroutine
         StartCoroutine(PlayRandomPetSounds());
     }
 
-    // Coroutine to randomly play background music from the array and loop
-    private IEnumerator PlayRandomBackgroundMusic()
+    // Play specific BGM by index and loop it
+    private void PlayBGM(int index)
     {
-        while (true)
+        if (index < 0 || index >= backgroundMusic.Length)
         {
-            // Randomly select a BGM from the array
-            int randomIndex = Random.Range(0, backgroundMusic.Length);
-
-            // Set the randomly selected clip
-            BGXSource.clip = backgroundMusic[randomIndex];
-
-            // Play the selected clip and loop it
-            BGXSource.Play();
-
-            // Wait until the clip finishes before selecting a new one
-            yield return new WaitForSeconds(BGXSource.clip.length);
+            Debug.LogError($"BGM index {index} is out of range! Array length: {backgroundMusic.Length}");
+            return;
         }
+
+        currentBGMIndex = index;
+        BGXSource.clip = backgroundMusic[index];
+        BGXSource.loop = true; // Loop the BGM
+        BGXSource.Play();
+    }
+
+    // Public method to switch to alternate BGM (index 1)
+    public void SwitchToAlternateBGM()
+    {
+        if (currentBGMIndex != 1)
+        {
+            PlayBGM(1);
+        }
+    }
+
+    // Public method to switch back to default BGM (index 0)
+    public void SwitchToDefaultBGM()
+    {
+        if (currentBGMIndex != 0)
+        {
+            PlayBGM(0);
+        }
+    }
+
+    // Public method to toggle between default and alternate BGM
+    public void ToggleBGM()
+    {
+        if (currentBGMIndex == 0)
+        {
+            SwitchToAlternateBGM();
+        }
+        else
+        {
+            SwitchToDefaultBGM();
+        }
+    }
+
+    // Public method to switch to a specific BGM by index
+    public void SwitchBGM(int index)
+    {
+        PlayBGM(index);
+    }
+
+    // Get current BGM index
+    public int GetCurrentBGMIndex()
+    {
+        return currentBGMIndex;
     }
 
     // Coroutine to randomly play pet sounds every 30-60 seconds
@@ -111,7 +151,6 @@ public class SoundManager : MonoBehaviour
     {
         audioSource.PlayOneShot(sound);  // Play the sound
         yield return new WaitForSeconds(duration);  // Wait for the duration
-        // No need to stop explicitly since PlayOneShot won't overlap, but you can stop it here if needed
     }
 
     public void PlayFaucet()
@@ -124,3 +163,28 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(lightSwitch);
     }
 }
+
+/* 
+USAGE EXAMPLES:
+
+// In MiniGame.cs or any other script:
+public SoundManager soundManager;
+
+void StartMiniGame()
+{
+    soundManager.SwitchToAlternateBGM(); // Switch to BGM index 1
+}
+
+void EndMiniGame()
+{
+    soundManager.SwitchToDefaultBGM(); // Switch back to BGM index 0
+}
+
+// Or use toggle:
+soundManager.ToggleBGM(); // Switches between 0 and 1
+
+// Or switch to specific index:
+soundManager.SwitchBGM(0); // Play first BGM
+soundManager.SwitchBGM(1); // Play second BGM
+soundManager.SwitchBGM(2); // Play third BGM (if you add more)
+*/

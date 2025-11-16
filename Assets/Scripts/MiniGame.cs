@@ -51,6 +51,7 @@ public class MiniGame : MonoBehaviour
 
     private int[] additionalIncrement = new int[] { 8, 10, 12, 15, 15, 20 };
     private string lastResult = ""; // Store the result type
+    public SoundManager soundManager;
 
     private void Start()
     {
@@ -138,10 +139,16 @@ public class MiniGame : MonoBehaviour
         isGameRunning = true;
         isIncreasing = true;
         ButtonForTap.SetActive(true);
-        
+
         // Make sure result panel is hidden when starting
         if (ResultPanel != null)
             ResultPanel.SetActive(false);
+
+        // NEW: Switch to minigame BGM (index 1)
+        if (soundManager != null)
+        {
+            soundManager.SwitchToAlternateBGM();
+        }
     }
 
     private IEnumerator waitPetToPosition()
@@ -211,7 +218,6 @@ public class MiniGame : MonoBehaviour
 
         BalltoPlay.transform.localPosition = targetPosition;
         BalltoPlay.transform.localScale = targetScale;
-        Debug.Log("Final Position: " + BalltoPlay.transform.localPosition);
     }
 
     private void DetermineSliderRange(float value)
@@ -257,18 +263,12 @@ public class MiniGame : MonoBehaviour
 
         StartCoroutine(BallGo(targetPosition, localTargetScale));
 
-        foreach (var toy in Toys)
-        {
-            toy.GetComponent<Button>().interactable = true;
-        }
-
         StartCoroutine(WaitAndShowResultPanel(3f));
     }
 
     private IEnumerator WaitAndShowResultPanel(float second)
     {
         yield return new WaitForSeconds(second);
-        Debug.Log("Waited for " + second);
 
         if (isLeft)
         {
@@ -336,7 +336,7 @@ public class MiniGame : MonoBehaviour
     private void EndMiniGame()
     {
         isInMiniGame = false;
-
+    
         HandAnimation.ResetTrigger("GoToss");
         Hand.SetActive(false);
         Toys[index].SetActive(true);
@@ -345,12 +345,22 @@ public class MiniGame : MonoBehaviour
         GameBG.SetActive(false);
         TopOfScreen.SetActive(true);
         PetSpriteRenderer.sortingOrder = 1;
-
+    
         RestoreAccessories();
         PetBehaviour.canWalk = true;
         foreach (var button in NavButtons)
         {
             button.SetActive(true);
+        }
+        foreach (var toy in Toys)
+        {
+            toy.GetComponent<Button>().interactable = true;
+        }
+    
+        // NEW: Switch back to default BGM (index 0)
+        if (soundManager != null)
+        {
+            soundManager.SwitchToDefaultBGM();
         }
     }
 
@@ -397,7 +407,6 @@ public class MiniGame : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Stats updated successfully on the backend.");
 
             string responseText = request.downloadHandler.text;
             PetStatsResponse statsResponse = JsonUtility.FromJson<PetStatsResponse>(responseText);
@@ -407,8 +416,6 @@ public class MiniGame : MonoBehaviour
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetHygiene, statsResponse.hygiene);
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetSleep, statsResponse.sleep);
             StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, statsResponse.coins);
-
-            Debug.Log($"Updated Stats - Playfulness: {statsResponse.playfulness}, Hunger: {statsResponse.hunger}, Sleep: {statsResponse.sleep}, Hygiene: {statsResponse.hygiene}, Coins: {statsResponse.coins}");
 
             int[] stats = new int[] { 
                 statsResponse.playfulness, 
@@ -428,7 +435,6 @@ public class MiniGame : MonoBehaviour
     {
         if (savedAccessoryStates != null && savedAccessoryStates.Length == accessoryObjects.Length)
         {
-            Debug.Log("Restoring accessories from saved states");
             for (int i = 0; i < accessoryObjects.Length; i++)
             {
                 accessoryObjects[i].SetActive(savedAccessoryStates[i]);
@@ -436,7 +442,6 @@ public class MiniGame : MonoBehaviour
         }
         else
         {
-            Debug.Log("Restoring accessories from PlayerPrefs (fallback)");
             RestoreAccessoriesFromPlayerPrefs();
         }
     }

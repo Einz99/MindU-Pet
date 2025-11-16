@@ -21,7 +21,7 @@ public class CollarsMenu : MonoBehaviour
     public TMP_Text[] Coins;
     public SoundManager SM;
     public GameObject Collar; // Add this to show/hide collar visual
-
+    private bool isTogglingProgrammatically = false;
     // Collar names
     private string[] collarName = new string[] { "RED COLLAR", "BLUE COLLAR", "GOLD COLLAR", "RAINBOW COLLAR" };
 
@@ -35,7 +35,6 @@ public class CollarsMenu : MonoBehaviour
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        Debug.Log($"From Collars:\nRootAPI: {apiUrl}\nAPI: {apiUrlSecondary}\nPetID: {petId}");
 
         // Call the method to fetch accessories
         StartCoroutine(GetAccessories());
@@ -56,7 +55,6 @@ public class CollarsMenu : MonoBehaviour
             {
                 // Parse the response if successful
                 string responseText = request.downloadHandler.text;
-                Debug.Log("Response: " + responseText);
 
                 // Convert the response into a structured object (this depends on your JSON structure).
                 Accessory[] accessories = JsonUtility.FromJson<AccessoryList>("{\"items\":" + responseText + "}").items;
@@ -64,8 +62,6 @@ public class CollarsMenu : MonoBehaviour
                 // Check if no accessories are returned
                 if (accessories == null || accessories.Length == 0)
                 {
-                    // Handle the case where there are no accessories
-                    Debug.Log("No accessories found.");
                     
                     // Reset all toggles and price panels to the default state (price panels active, toggles inactive)
                     HideAllToggles();
@@ -92,7 +88,6 @@ public class CollarsMenu : MonoBehaviour
                         int toggleIndex = accessory.accessory_id - 9;  // Matching 0-based index for toggles array (9 -> 0, 10 -> 1, etc.)
                         int pricePanelIndex = accessory.accessory_id - 9;  // Matching 0-based index for price panel array (9 -> 0, 10 -> 1, etc.)
 
-                        Debug.Log(accessory.accessory_category);
                         if (accessory.accessory_category != null) // This indicates the collar was bought
                         {
                             // Show the toggle for this collar and hide the price panel
@@ -127,7 +122,6 @@ public class CollarsMenu : MonoBehaviour
         // Check if the accessory (collar) has already been bought
         if (bought[collar])
         {
-            Debug.Log("This accessory has already been bought.");
             return;  // Exit if the accessory is already bought
         }
 
@@ -161,7 +155,6 @@ public class CollarsMenu : MonoBehaviour
             // Sync with the backend
             string url = $"{apiUrlSecondary}/pets/{petId}/buyAccessory"; // Use the secondary API
             string jsonData = JsonUtility.ToJson(new AccPayload { accessory_id = selected + 9 }); // Collar IDs are 9-12
-            Debug.Log(url);
             
             // Create the HTTP request
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -188,36 +181,52 @@ public class CollarsMenu : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Accessory purchased successfully: " + request.downloadHandler.text);
-            string petkey = PlayerPrefs.GetString(PlayerPrefKeys.PetPrefix);
-            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetNeck, selected + 9);  // Store collar selection in PlayerPrefs
-            PlayerPrefs.Save();
-            Collar.SetActive(true);
-            
-            // Mark the accessory as bought
+            string petkey = PlayerPrefKeys.PetPrefix;
+
             bought[selected] = true;
 
-            // Deactivate all toggles and show the selected one
-            DeactivateAllToggles();
+            isTogglingProgrammatically = true;
+
+            for (int i = 0; i < toggles.Length; i++)
+            {
+                if (toggles[i] != null)
+                {
+                    Toggle toggle = toggles[i].GetComponent<Toggle>();
+                    if (toggle != null)
+                    {
+                        toggle.isOn = false;
+                        toggle.interactable = true;
+                    }
+                }
+            }
+
             toggles[selected].SetActive(true);
 
-            // Hide the price panel for the purchased accessory
+            Toggle purchasedToggle = toggles[selected].GetComponent<Toggle>();
+            if (purchasedToggle != null)
+            {
+                purchasedToggle.isOn = true;
+                purchasedToggle.interactable = true;
+            }
+
+            isTogglingProgrammatically = false;
+
             pricePanel[selected].SetActive(false);
 
-            // Enable the purchased toggle (set it to "on")
-            OnToggle(selected);
+            PlayerPrefs.SetInt(petkey + PlayerPrefKeys.PetNeck, selected + 9);
+            PlayerPrefs.Save();
+            StartCoroutine(UpdateAccessoryOnServer(selected + 9));
 
-            // Update the displayed coin amount
-            string petKey2 = PlayerPrefKeys.PetPrefix;
+            Collar.SetActive(true);
+
             foreach (var coin in Coins)
             {
-                coin.text = PlayerPrefs.GetInt(petKey2 + PlayerPrefKeys.PetCoins).ToString();
+                coin.text = PlayerPrefs.GetInt(petkey + PlayerPrefKeys.PetCoins).ToString();
             }
         }
         else
         {
             Debug.LogError("Error purchasing accessory: " + request.error);
-            // Revert coin deduction if API call fails
             string petKey = PlayerPrefKeys.PetPrefix;
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetCoins, currentCoins);
             PlayerPrefs.Save();
@@ -232,12 +241,18 @@ public class CollarsMenu : MonoBehaviour
 
     private void DeactivateAllToggles()
     {
-        // Deactivate all toggles and make them interactable
+        // Turn off all toggles but keep bought ones visible (just unchecked)
         foreach (var toggle in toggles)
         {
-            toggle.SetActive(false);
-            toggle.GetComponent<Toggle>().interactable = true;  // Ensure all toggles are interactable again
-            toggle.GetComponent<Toggle>().isOn = false;  // Make sure all toggles are turned off
+            if (toggle != null)
+            {
+                Toggle toggleComponent = toggle.GetComponent<Toggle>();
+                if (toggleComponent != null)
+                {
+                    toggleComponent.isOn = false;
+                    toggleComponent.interactable = true;
+                }
+            }
         }
     }
 
@@ -262,6 +277,9 @@ public class CollarsMenu : MonoBehaviour
     // Called when a toggle is clicked
     public void OnToggle(int index)
     {
+        // Ignore programmatic toggle changes
+        if (isTogglingProgrammatically) return;
+
         if (toggles[index] == null)
         {
             Debug.LogError($"Toggle at index {index} is null!");
@@ -269,51 +287,61 @@ public class CollarsMenu : MonoBehaviour
         }
 
         Toggle currentToggle = toggles[index].GetComponent<Toggle>();
-        
+
         if (currentToggle == null)
         {
             Debug.LogError($"Toggle component at index {index} is null!");
             return;
         }
-        
+
         string petKey = PlayerPrefKeys.PetPrefix;
-        
-        // If the toggle is turned off (i.e., the accessory is being removed)
+
+        // If the toggle is turned off (removing the accessory)
         if (!currentToggle.isOn)
         {
             // Remove the accessory
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetNeck, 0);
             PlayerPrefs.Save();
-            Collar.SetActive(true);
-            
+
+            // Hide collar when toggle is OFF
+            Collar.SetActive(false);
+
             // Call the backend API to remove the accessory (set to 0)
             StartCoroutine(UpdateAccessoryOnServer(0));
         }
         else
         {
+            // Set flag to prevent other toggles from triggering callbacks
+            isTogglingProgrammatically = true;
+
             // Turn off all other toggles
             for (int i = 0; i < toggles.Length; i++)
             {
                 if (i == index) continue;
 
-                if (toggles[i] != null)
+                if (toggles[i] != null && toggles[i].activeInHierarchy)
                 {
                     Toggle otherToggle = toggles[i].GetComponent<Toggle>();
                     if (otherToggle != null)
                     {
-                        otherToggle.isOn = false;
+                        otherToggle.isOn = false; // Won't trigger OnToggle
                     }
                 }
             }
-            
+
+            // Reset flag
+            isTogglingProgrammatically = false;
+
             // Set the selected accessory (9-12 for collars)
             int accessoryId = index + 9;
-            
+
             // Update PlayerPrefs
             PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetNeck, accessoryId);
             PlayerPrefs.Save();
-            Collar.SetActive(false);
-            
+
+            // Show collar when toggle is ON
+            Collar.SetActive(true);
+
             // Call the backend API to add the accessory
             StartCoroutine(UpdateAccessoryOnServer(accessoryId));
         }
@@ -330,7 +358,6 @@ public class CollarsMenu : MonoBehaviour
             accessory_category = "collar" 
         });
 
-        Debug.Log($"Updating accessory on server: ID={accessory_id}, URL={url}");
 
         // Create the UnityWebRequest
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
@@ -342,16 +369,5 @@ public class CollarsMenu : MonoBehaviour
 
         // Send the request and wait for a response
         yield return request.SendWebRequest();
-
-        // Handle the response
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Accessory updated successfully: " + request.downloadHandler.text);
-        }
-        else
-        {
-            Debug.LogError("Error updating accessory: " + request.error);
-            // Optionally revert the PlayerPrefs change if the API call fails
-        }
     }
 }
