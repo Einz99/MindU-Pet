@@ -83,13 +83,11 @@ public class FoodButton : MonoBehaviour
             {
                 Debug.Log("⚠️ No collider found, adding BoxCollider2D");
                 
-                // Add BoxCollider2D if none exists
                 BoxCollider2D boxCol = gameObject.AddComponent<BoxCollider2D>();
                 
                 SpriteRenderer sr = GetComponent<SpriteRenderer>();
                 if (sr != null)
                 {
-                    // FIX: Convert Vector3 to Vector2 properly
                     Vector2 baseSize = new Vector2(sr.bounds.size.x, sr.bounds.size.y);
                     Vector2 expandedSize = baseSize + new Vector2(touchExpandArea, touchExpandArea);
                     boxCol.size = expandedSize;
@@ -113,22 +111,9 @@ public class FoodButton : MonoBehaviour
         }
     }
 
-    // Method 1: Unity's built-in mouse events
+    // ✅ ONLY use OnMouseDown - works in WebGL without Input System issues
     private void OnMouseDown()
     {
-#if UNITY_EDITOR
-        if (!forceWebGLMode)
-        {
-            if (!isClickable) return;
-
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
-            HandleFoodClick();
-        }
-#elif UNITY_WEBGL
         if (!isClickable) return;
 
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
@@ -136,96 +121,12 @@ public class FoodButton : MonoBehaviour
             return;
         }
 
+        Debug.Log("🍔 Food button clicked!");
         HandleFoodClick();
-#endif
     }
 
-    // Method 2: Update-based touch detection
-    private void Update()
-    {
-        if (!isClickable) return;
-
-#if UNITY_EDITOR
-        if (forceWebGLMode)
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (IsTouchOnSprite(Input.mousePosition))
-                {
-                    HandleFoodClick();
-                }
-            }
-        }
-#elif UNITY_WEBGL || UNITY_ANDROID || UNITY_IOS
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            
-            if (touch.phase == TouchPhase.Began)
-            {
-                if (IsTouchOnSprite(touch.position))
-                {
-                    HandleFoodClick();
-                }
-            }
-        }
-        else if (Input.GetMouseButtonDown(0))
-        {
-            if (IsTouchOnSprite(Input.mousePosition))
-            {
-                HandleFoodClick();
-            }
-        }
-#endif
-    }
-
-    private bool IsTouchOnSprite(Vector2 screenPosition)
-    {
-        try
-        {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return false;
-            }
-
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPosition);
-            worldPos.z = 0;
-
-            // Method 1: Use Collider2D
-            Collider2D col = GetComponent<Collider2D>();
-            if (col != null && col.OverlapPoint(worldPos))
-            {
-                return true;
-            }
-
-            // Method 2: Raycast
-            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
-            if (hit.collider != null && hit.collider.gameObject == gameObject)
-            {
-                return true;
-            }
-
-            // Method 3: Bounds check
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                Bounds bounds = sr.bounds;
-                bounds.Expand(touchExpandArea);
-                
-                if (bounds.Contains(worldPos))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"❌ Error in IsTouchOnSprite: {ex.Message}");
-            return false;
-        }
-    }
+    // ✅ REMOVED Update() method entirely to avoid Input System conflicts
+    // OnMouseDown() handles all click/touch detection automatically
 
     private void HandleFoodClick()
     {
@@ -235,12 +136,16 @@ public class FoodButton : MonoBehaviour
 
             if (foodquantity == 0)
             {
-                NotEnoughFoodPanel.SetActive(true);
+                if (NotEnoughFoodPanel != null)
+                    NotEnoughFoodPanel.SetActive(true);
                 return;
             }
 
-            petBehaviour.OnFeedButtonPressed();
-            FoodIcon.SetActive(false);
+            if (petBehaviour != null)
+                petBehaviour.OnFeedButtonPressed();
+                
+            if (FoodIcon != null)
+                FoodIcon.SetActive(false);
 
             StartCoroutine(DisableClickForDuration(10f));
             StartCoroutine(DecreaseFoodOnBackend());
@@ -258,7 +163,10 @@ public class FoodButton : MonoBehaviour
         yield return new WaitForSeconds(duration);
 
         isClickable = true;
-        FoodIcon.SetActive(true);
+        
+        if (FoodIcon != null)
+            FoodIcon.SetActive(true);
+            
         foodquantity -= 1;
         
         int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
@@ -282,11 +190,17 @@ public class FoodButton : MonoBehaviour
         PlayerPrefs.Save();
         
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
-        HPS.UpdateButtonFill(stats);
         
-        foreach (var text in Foodtext)
+        if (HPS != null)
+            HPS.UpdateButtonFill(stats);
+        
+        if (Foodtext != null)
         {
-            text.text = foodquantity.ToString() + "x";
+            foreach (var text in Foodtext)
+            {
+                if (text != null)
+                    text.text = foodquantity.ToString() + "x";
+            }
         }
     }
 
@@ -299,6 +213,11 @@ public class FoodButton : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"Error updating food on backend: {request.error}");
+        }
     }
 
     private void OnDrawGizmos()
