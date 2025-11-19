@@ -5,14 +5,14 @@ using System;
 public class HorizontalPageScroller : MonoBehaviour
 {
     [Header("Scroll Settings")]
-    public Transform contentParent; // Parent object containing all 4 sprites
-    public float pageWidth = 1920f; // Width of each page (adjust to your screen/canvas size)
-    public float scrollDuration = 1f; // Time to scroll between pages
+    public Transform contentParent;
+    public float pageWidth = 1920f;
+    public float scrollDuration = 1f;
     public AnimationCurve scrollCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     public GameObject DailyReward;
 
     [Header("Page Settings")]
-    public int totalPages = 4; // Number of sprite pages
+    public int totalPages = 4;
     public GameObject Shop;
     private int currentPage = 3;
     private bool isScrolling = false;
@@ -20,16 +20,16 @@ public class HorizontalPageScroller : MonoBehaviour
     private Vector3 startPosition;
 
     [Header("Selected Settings")]
-    public GameObject[] unselectedObjects; // Array of unselected GameObjects
-    public GameObject[] selectedObjects; // Array of selected GameObjects
-    public Animator animator; // Reference to the Animator component
+    public GameObject[] unselectedObjects;
+    public GameObject[] selectedObjects;
+    public Animator animator;
 
     [Header("Pet Settings")]
-    public GameObject petObject; // Reference to the pet GameObject
-    private PetBehaviour petBehaviour; // Reference to the PetBehaviour script
-    public GameObject soapObject; // Reference to the soap GameObject
+    public GameObject petObject;
+    private PetBehaviour petBehaviour;
+    public GameObject soapObject;
     public GameObject SoapQuantity;
-    public GameObject lightButtonObject; // Reference to the light button GameObject
+    public GameObject lightButtonObject;
     public GameObject FoodQuantity;
     public GameObject Faucet;
     public GameObject Toys;
@@ -40,7 +40,7 @@ public class HorizontalPageScroller : MonoBehaviour
     private bool isCurtainOpen;
 
     [Header("Accessory Settings")]
-    public GameObject[] accessoryObjects; // Array of accessory GameObjects to toggle
+    public GameObject[] accessoryObjects;
     private bool isHatOn = false;
     private bool isCollarOn = false;
     private bool isGlassesOn = false;
@@ -50,17 +50,24 @@ public class HorizontalPageScroller : MonoBehaviour
 
     private const string LAST_DAILY_REWARD_KEY = "LastDailyRewardDate";
     
+    // ✅ ADD THIS FLAG
+    private bool isInitialized = false;
+    
     void Start()
     {
+        // ✅ VALIDATE ButtonFills array FIRST
+        ValidateButtonFills();
+        
         CheckAndShowDailyRewards();
 
         isCurtainOpen = PlayerPrefs.GetInt(PlayerPrefKeys.isCurtainOpen, 0) == 1;
         petBehaviour = petObject.GetComponent<PetBehaviour>();
-        // Set initial position
+        
         if (contentParent != null)
         {
             contentParent.localPosition = new Vector3(0f, contentParent.localPosition.y, contentParent.localPosition.z);
         }
+        
         scrollDuration = 0f;
         JumpToPage(currentPage);
         scrollDuration = 1f;
@@ -72,17 +79,46 @@ public class HorizontalPageScroller : MonoBehaviour
         isCollarOn = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetNeck, 0) > 0;
         isGlassesOn = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetEyes, 0) > 0;
 
+        // ✅ MARK AS INITIALIZED
+        isInitialized = true;
+        Debug.Log("✅ HorizontalPageScroller initialized successfully");
+    }
+
+    // ✅ NEW METHOD: Validate ButtonFills array
+    private void ValidateButtonFills()
+    {
+        if (ButtonFills == null || ButtonFills.Length != 4)
+        {
+            Debug.LogError("❌ ButtonFills array is null or wrong size! Expected 4 elements.");
+            ButtonFills = new ButtonFill[4];
+            return;
+        }
+
+        int nullCount = 0;
+        for (int i = 0; i < ButtonFills.Length; i++)
+        {
+            if (ButtonFills[i] == null)
+            {
+                Debug.LogError($"❌ ButtonFills[{i}] is null!");
+                nullCount++;
+            }
+        }
+
+        if (nullCount > 0)
+        {
+            Debug.LogError($"❌ Found {nullCount} null ButtonFill references! Please assign them in Inspector.");
+        }
+        else
+        {
+            Debug.Log("✅ All ButtonFills validated successfully");
+        }
     }
 
     private void CheckAndShowDailyRewards()
     {
-        // Get today's date as a string (format: yyyy-MM-dd)
         string todayDate = DateTime.Now.ToString("yyyy-MM-dd");
-        
-        // Get the last reward date from PlayerPrefs
         string lastRewardDate = PlayerPrefs.GetString(LAST_DAILY_REWARD_KEY, "");
 
-        // If no date exists or it's not today, show daily rewards
         if (string.IsNullOrEmpty(lastRewardDate) || lastRewardDate != todayDate)
         {
             if (DailyReward != null)
@@ -101,15 +137,13 @@ public class HorizontalPageScroller : MonoBehaviour
 
     private void ScrollToPage(int pageIndex)
     {
-        if (contentParent == null || isScrolling) return; // Prevent scrolling while animating
+        if (contentParent == null || isScrolling) return;
 
-        // Calculate target position (moving left means negative X)
         float targetX = -pageIndex * pageWidth;
         targetPosition = new Vector3(targetX, contentParent.localPosition.y, contentParent.localPosition.z);
         startPosition = contentParent.localPosition;
         StartCoroutine(AnimateScroll());
 
-        // Update selected/unselected objects
         for (int i = 0; i < totalPages; i++)
         {
             if (i == pageIndex)
@@ -128,7 +162,6 @@ public class HorizontalPageScroller : MonoBehaviour
         switch (pageIndex)
         {
             case 0:
-                // Set the curtain active based on isCurtainOpen when on page 0
                 curtain.SetActive(isCurtainOpen);
                 curtainButton.SetActive(true);
                 lightButtonObject.SetActive(false);
@@ -151,7 +184,6 @@ public class HorizontalPageScroller : MonoBehaviour
                 break;
 
             case 2:
-                // Enable the soap sprite renderer on page 2
                 curtain.SetActive(false);
                 curtainButton.SetActive(false);
                 lightButtonObject.SetActive(false);
@@ -162,7 +194,6 @@ public class HorizontalPageScroller : MonoBehaviour
                 break;
 
             case 3:
-                // Enable the light button on page 3
                 lightButtonObject.SetActive(true);
                 Toys.SetActive(false);
                 curtain.SetActive(false);
@@ -187,8 +218,8 @@ public class HorizontalPageScroller : MonoBehaviour
         SpriteRenderer soapSpriteRenderer = soapObject.GetComponent<SpriteRenderer>();
         soapSpriteRenderer.enabled = true;
         SoapQuantity.SetActive(true);
-
     }
+
     private IEnumerator ShowFoodQuantity()
     {
         yield return new WaitForSeconds(0.8f + scrollDuration - 1f);
@@ -206,15 +237,12 @@ public class HorizontalPageScroller : MonoBehaviour
             float progress = elapsedTime / scrollDuration;
             float curveValue = scrollCurve.Evaluate(progress);
 
-            // Interpolate position
             contentParent.localPosition = Vector3.Lerp(startPosition, targetPosition, curveValue);
             yield return null;
         }
 
-        // Ensure final position is exact
         contentParent.localPosition = targetPosition;
 
-        // After scrolling, reset animator parameters
         animator.SetBool("goLeft", false);
         animator.SetBool("goRight", false);
 
@@ -222,9 +250,9 @@ public class HorizontalPageScroller : MonoBehaviour
 
         if (currentPage == 0)
         {
-            PetBehaviour.canWalk = true; // Allow pet to walk after scrolling
+            PetBehaviour.canWalk = true;
         }
-        isScrolling = false; // Allow new scrolling after animation finishes
+        isScrolling = false;
     }
 
     private IEnumerator idleAccessories()
@@ -252,14 +280,13 @@ public class HorizontalPageScroller : MonoBehaviour
         }
     }
 
-    // Public method to jump to specific page
     public void JumpToPage(int pageIndex)
     {
-        if (pageIndex < 0 || pageIndex >= totalPages || isScrolling) return; // Prevent jumping if still scrolling
+        if (pageIndex < 0 || pageIndex >= totalPages || isScrolling) return;
 
         if (currentPage == 0)
         {
-            petBehaviour.DisableBehavior(); // Disable pet behavior when leaving page 0
+            petBehaviour.DisableBehavior();
             StartCoroutine(petBehaviour.WalkToInitialPosition());
         }
 
@@ -284,23 +311,20 @@ public class HorizontalPageScroller : MonoBehaviour
             accessoryObjects[i].SetActive(false);
         }
 
-
         if (goLeft)
         {
-            animator.SetBool("goLeft", true); // Going left
-            animator.SetBool("goRight", false); // Set goRight to false
+            animator.SetBool("goLeft", true);
+            animator.SetBool("goRight", false);
         }
         else 
         {
-            animator.SetBool("goLeft", false); // Set goLeft to false
-            animator.SetBool("goRight", true); // Going right
+            animator.SetBool("goLeft", false);
+            animator.SetBool("goRight", true);
         }
         currentPage = pageIndex;
         ScrollToPage(currentPage);
     }
-    
 
-    // Getter for current page
     public int GetCurrentPage()
     {
         return currentPage;
@@ -322,13 +346,38 @@ public class HorizontalPageScroller : MonoBehaviour
         }
     }
 
+    // ✅ IMPROVED: Add safety checks and early return if not initialized
     public void UpdateButtonFill(int[] newValues)
     {
-        if (newValues.Length != ButtonFills.Length)
+        // ✅ CHECK 1: Verify initialization
+        if (!isInitialized)
         {
+            Debug.LogWarning("⚠️ UpdateButtonFill called before HorizontalPageScroller is initialized! Ignoring...");
             return;
         }
-        // ✅ Add null checks
+
+        // ✅ CHECK 2: Validate input array
+        if (newValues == null)
+        {
+            Debug.LogError("❌ UpdateButtonFill received null array!");
+            return;
+        }
+
+        // ✅ CHECK 3: Validate ButtonFills array
+        if (ButtonFills == null)
+        {
+            Debug.LogError("❌ ButtonFills array is null!");
+            return;
+        }
+
+        // ✅ CHECK 4: Validate array lengths match
+        if (newValues.Length != ButtonFills.Length)
+        {
+            Debug.LogError($"❌ Array length mismatch! Expected {ButtonFills.Length}, got {newValues.Length}");
+            return;
+        }
+
+        // ✅ UPDATE: With individual null checks
         for (int i = 0; i < ButtonFills.Length; i++)
         {
             if (ButtonFills[i] != null)
@@ -338,7 +387,7 @@ public class HorizontalPageScroller : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"ButtonFills[{i}] is null!");
+                Debug.LogError($"❌ ButtonFills[{i}] is null! Cannot update.");
             }
         }
     }

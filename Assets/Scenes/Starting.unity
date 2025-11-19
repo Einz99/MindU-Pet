@@ -5687,9 +5687,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a681d6cf1b421f34681c72f40dfac304, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DataManager
-  studentId: 0
-  apiUrl: 
-  apiUrlSecondary: 
   loadingScreen: {fileID: 229345533}
   VideoOrSkipScreen: {fileID: 2117358510}
   CreationScreen: {fileID: 889969627}
@@ -5707,9 +5704,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10a5f7c78cc4cdb43b1b6a0942af582e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnityDataReceiver
-  timeout: 1
-  fallbackStudentId: 46
-  port: 3000
   pcServerIP: 
 --- !u!4 &2125771939
 Transform:

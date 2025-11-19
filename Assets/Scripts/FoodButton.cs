@@ -18,24 +18,36 @@ public class FoodButton : MonoBehaviour
     public HorizontalPageScroller HPS;
 
     [Header("Touch Settings")]
-    public float touchExpandArea = 0.5f; // Expand clickable area for easier tapping
+    public float touchExpandArea = 0.5f;
     
     [Header("Debug")]
     public bool showDebugInfo = false;
-    public bool forceWebGLMode = false; // Force WebGL behavior in editor for testing
+    public bool forceWebGLMode = false;
 
     private void Start()
     {
-        // Initialize API URL and pet ID from PlayerPrefs
-        string petKey = PlayerPrefKeys.PetPrefix;
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
-        apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
-        petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        
-        LogPlatformInfo();
+        try
+        {
+            Debug.Log("🍔 FoodButton.Start() - Beginning");
+            
+            // Initialize API URL and pet ID from PlayerPrefs
+            string petKey = PlayerPrefKeys.PetPrefix;
+            apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+            apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
+            petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+            
+            LogPlatformInfo();
 
-        // Ensure collider exists for WebGL touch
-        EnsureCollider();
+            // Ensure collider exists for WebGL touch
+            EnsureCollider();
+            
+            Debug.Log("✅ FoodButton.Start() - Completed");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Error in FoodButton.Start(): {ex.Message}");
+            Debug.LogError($"Stack: {ex.StackTrace}");
+        }
     }
 
     private void LogPlatformInfo()
@@ -64,30 +76,51 @@ public class FoodButton : MonoBehaviour
 
     private void EnsureCollider()
     {
-        Collider2D col = GetComponent<Collider2D>();
-        if (col == null)
+        try
         {
-            // Add BoxCollider2D if none exists
-            BoxCollider2D boxCol = gameObject.AddComponent<BoxCollider2D>();
-            SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr != null)
+            Collider2D col = GetComponent<Collider2D>();
+            if (col == null)
             {
-                // Expand the collider slightly for easier tapping
-                boxCol.size = sr.bounds.size + new Vector3(touchExpandArea, touchExpandArea, 0);
+                Debug.Log("⚠️ No collider found, adding BoxCollider2D");
+                
+                // Add BoxCollider2D if none exists
+                BoxCollider2D boxCol = gameObject.AddComponent<BoxCollider2D>();
+                
+                SpriteRenderer sr = GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    // FIX: Convert Vector3 to Vector2 properly
+                    Vector2 baseSize = new Vector2(sr.bounds.size.x, sr.bounds.size.y);
+                    Vector2 expandedSize = baseSize + new Vector2(touchExpandArea, touchExpandArea);
+                    boxCol.size = expandedSize;
+                    
+                    Debug.Log($"✅ BoxCollider2D added with size: {expandedSize}");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ No SpriteRenderer found, using default collider size");
+                }
             }
+            else
+            {
+                Debug.Log("✅ Collider already exists");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Error in EnsureCollider(): {ex.Message}");
+            Debug.LogError($"Stack: {ex.StackTrace}");
         }
     }
 
-    // Method 1: Unity's built-in mouse events (works in Unity Editor & PC builds)
+    // Method 1: Unity's built-in mouse events
     private void OnMouseDown()
     {
 #if UNITY_EDITOR
-        // In Unity Editor, use OnMouseDown for easy testing
         if (!forceWebGLMode)
         {
             if (!isClickable) return;
 
-            // Ignore if clicking on UI
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 return;
@@ -96,10 +129,8 @@ public class FoodButton : MonoBehaviour
             HandleFoodClick();
         }
 #elif UNITY_WEBGL
-        // In WebGL build, OnMouseDown works well
         if (!isClickable) return;
 
-        // Ignore if clicking on UI
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             return;
@@ -109,14 +140,12 @@ public class FoodButton : MonoBehaviour
 #endif
     }
 
-    // Method 2: Update-based touch detection (for mobile & WebGL testing)
+    // Method 2: Update-based touch detection
     private void Update()
     {
-        // Only process if clickable
         if (!isClickable) return;
 
 #if UNITY_EDITOR
-        // In Unity Editor with forceWebGLMode, simulate mobile touch behavior
         if (forceWebGLMode)
         {
             if (Input.GetMouseButtonDown(0))
@@ -128,12 +157,10 @@ public class FoodButton : MonoBehaviour
             }
         }
 #elif UNITY_WEBGL || UNITY_ANDROID || UNITY_IOS
-        // Handle touch input for mobile/WebGL
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             
-            // Only process on TouchPhase.Began to avoid multiple triggers
             if (touch.phase == TouchPhase.Began)
             {
                 if (IsTouchOnSprite(touch.position))
@@ -142,7 +169,6 @@ public class FoodButton : MonoBehaviour
                 }
             }
         }
-        // Fallback to mouse for WebGL on desktop
         else if (Input.GetMouseButtonDown(0))
         {
             if (IsTouchOnSprite(Input.mousePosition))
@@ -155,71 +181,79 @@ public class FoodButton : MonoBehaviour
 
     private bool IsTouchOnSprite(Vector2 screenPosition)
     {
-        // Ignore if clicking on UI
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        try
         {
-            return false;
-        }
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return false;
+            }
 
-        // Convert screen position to world position
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPosition);
-        worldPos.z = 0;
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPosition);
+            worldPos.z = 0;
 
-        // Method 1: Use Collider2D.OverlapPoint (most reliable)
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null && col.OverlapPoint(worldPos))
-        {
-            return true;
-        }
-
-        // Method 2: Raycast (fallback)
-        RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
-        if (hit.collider != null && hit.collider.gameObject == gameObject)
-        {
-            return true;
-        }
-
-        // Method 3: Bounds check with expanded area (most forgiving)
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
-        {
-            Bounds bounds = sr.bounds;
-            // Expand bounds for easier tapping
-            bounds.Expand(touchExpandArea);
-            
-            if (bounds.Contains(worldPos))
+            // Method 1: Use Collider2D
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null && col.OverlapPoint(worldPos))
             {
                 return true;
             }
-        }
 
-        return false;
+            // Method 2: Raycast
+            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+            if (hit.collider != null && hit.collider.gameObject == gameObject)
+            {
+                return true;
+            }
+
+            // Method 3: Bounds check
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                Bounds bounds = sr.bounds;
+                bounds.Expand(touchExpandArea);
+                
+                if (bounds.Contains(worldPos))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Error in IsTouchOnSprite: {ex.Message}");
+            return false;
+        }
     }
 
     private void HandleFoodClick()
     {
-
-        foodquantity = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetFoodStack);
-        
-
-        if (foodquantity == 0)
+        try
         {
-            NotEnoughFoodPanel.SetActive(true);
-            return;
+            foodquantity = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetFoodStack);
+
+            if (foodquantity == 0)
+            {
+                NotEnoughFoodPanel.SetActive(true);
+                return;
+            }
+
+            petBehaviour.OnFeedButtonPressed();
+            FoodIcon.SetActive(false);
+
+            StartCoroutine(DisableClickForDuration(10f));
+            StartCoroutine(DecreaseFoodOnBackend());
         }
-
-        petBehaviour.OnFeedButtonPressed();
-        FoodIcon.SetActive(false);
-
-        StartCoroutine(DisableClickForDuration(10f));
-        StartCoroutine(DecreaseFoodOnBackend());
-
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Error in HandleFoodClick: {ex.Message}");
+        }
     }
 
     private IEnumerator DisableClickForDuration(float duration)
     {
         isClickable = false;
-        
 
         yield return new WaitForSeconds(duration);
 
@@ -247,10 +281,7 @@ public class FoodButton : MonoBehaviour
         PlayerPrefs.SetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetFoodStack, foodquantity);
         PlayerPrefs.Save();
         
-        // Create an array with the updated stats
         int[] stats = new int[] { playfulness, hunger, bath, sleep };
-
-        // Call UpdateButtonFill with the stats array
         HPS.UpdateButtonFill(stats);
         
         foreach (var text in Foodtext)
@@ -270,7 +301,6 @@ public class FoodButton : MonoBehaviour
         yield return request.SendWebRequest();
     }
 
-    // Visualize the clickable area in editor
     private void OnDrawGizmos()
     {
         if (showDebugInfo)

@@ -23,23 +23,22 @@ public class PetBehaviour : MonoBehaviour
 
     // State variables for behavior
     private float timer;
-    private int sleepState = 0; // 0: idle, 1: left lay sleep, 2: right lay sleep, 3: sit sleep left, 4: sit sleep right
+    private int sleepState = 0;
     private bool goLeft = false;
     private bool goRight = false;
     private bool isMoving = false;
     private bool isIdle = true;
     private bool isSleeping = false;
-    public static bool canWalk = false; // Flag to disable walking and sleeping behaviors
+    public static bool canWalk = false;
 
     [Header("Buttons")]
-    public GameObject[] buttonsToDisable; // Buttons to disable when pet is doing other actions
+    public GameObject[] buttonsToDisable;
 
     public Animator foodAnimator;
-
     public Animator FaucerAnimator;
 
     [Header("Bath Settings")]
-    public GameObject[] bubblePrefabs;  // Bubble prefabs
+    public GameObject[] bubblePrefabs;
     public Animator ShowerAnimator;
     public GameObject ShowerButton;
     public GameObject SoapQuantity;
@@ -48,9 +47,9 @@ public class PetBehaviour : MonoBehaviour
     public Sprite[] soaps = new Sprite[4];
     public SpriteRenderer soap;
     private bool isTouching = false;
-    private static int bubbleCount = 0; // Static counter for bubbles
-    private float bubbleFlowDuration = 10f; // Time for the bubbles to move down
-    private float bubbleFadeDuration = 7f; // Time for fading the bubbles
+    private static int bubbleCount = 0;
+    private float bubbleFlowDuration = 10f;
+    private float bubbleFadeDuration = 7f;
 
     [Header("Sleep Settings")]
     public GameObject lightEffect;
@@ -59,7 +58,7 @@ public class PetBehaviour : MonoBehaviour
     public StatManager statManager;
 
     [Header("Accessory Settings")]
-    public GameObject[] accessoryObjects; // Array of accessory GameObjects to toggle
+    public GameObject[] accessoryObjects;
     public Sprite[] Hats;
     public Sprite[] Glasses;
     public Sprite[] Collars;
@@ -70,144 +69,320 @@ public class PetBehaviour : MonoBehaviour
     private bool isGlassesOn = false;
     private Vector3 glassesOriginalPosition;
     private Vector3 glassesOriginalScale;
+
     [Header("Audio Source")]
     public SoundManager SM;
     public TMP_Text foodStack;
     public TMP_Text[] Coins;
     public HorizontalPageScroller HPS;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    // ✅ ADD INITIALIZATION FLAG
+    private bool isInitialized = false;
+
     void Start()
     {
-        animator = GetComponent<Animator>();
-        pet = new Pet();
-        reflectPetData();
-        SetInitialPosition();
-        glassesOriginalPosition = accessoryObjects[2].transform.localPosition;
-        glassesOriginalScale = accessoryObjects[2].transform.localScale;
-        if (PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping, 0) == 1)
+        try
         {
-            ToggleLightEffect();
-        } else
+            Debug.Log("🐾 PetBehaviour.Start() - Beginning");
+
+            // ✅ Validate critical references first
+            if (!ValidateCriticalReferences())
+            {
+                Debug.LogError("❌ PetBehaviour initialization failed - missing critical references!");
+                return;
+            }
+
+            animator = GetComponent<Animator>();
+            pet = new Pet();
+
+            SetInitialPosition();
+
+            // ✅ Safe accessory initialization with null checks
+            if (accessoryObjects != null && accessoryObjects.Length > 2 && accessoryObjects[2] != null)
+            {
+                glassesOriginalPosition = accessoryObjects[2].transform.localPosition;
+                glassesOriginalScale = accessoryObjects[2].transform.localScale;
+            }
+
+            if (PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping, 0) == 1)
+            {
+                ToggleLightEffect();
+            } 
+            else
+            {
+                FTLIFS = true;
+            }
+
+            // ✅ Wait for HPS to be ready before calling reflectPetData
+            StartCoroutine(DelayedReflectPetData());
+
+            Debug.Log("✅ PetBehaviour.Start() - Completed");
+        }
+        catch (System.Exception ex)
         {
-            FTLIFS = true;
+            Debug.LogError($"❌ Exception in PetBehaviour.Start(): {ex.Message}");
+            Debug.LogError($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    // ✅ NEW: Validate critical references
+    private bool ValidateCriticalReferences()
+    {
+        bool isValid = true;
+
+        if (HPS == null)
+        {
+            Debug.LogError("❌ HorizontalPageScroller (HPS) is not assigned!");
+            isValid = false;
+        }
+
+        if (petNameTxt == null)
+        {
+            Debug.LogWarning("⚠️ petNameTxt is not assigned!");
+        }
+
+        if (foodStack == null)
+        {
+            Debug.LogWarning("⚠️ foodStack is not assigned!");
+        }
+
+        if (Coins == null || Coins.Length == 0)
+        {
+            Debug.LogWarning("⚠️ Coins array is empty!");
+        }
+
+        return isValid;
+    }
+
+    // ✅ IMPROVED: Wait for HPS to be fully ready
+    private IEnumerator DelayedReflectPetData()
+    {
+        Debug.Log("⏳ Waiting for HorizontalPageScroller to initialize...");
+
+        // Wait until HPS exists and is active
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (HPS == null && elapsed < timeout)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+
+        if (HPS == null)
+        {
+            Debug.LogError("❌ HorizontalPageScroller not found after timeout!");
+            yield break;
+        }
+
+        // Wait for HPS to complete its Start() method
+        yield return new WaitForSeconds(0.5f);
+
+        Debug.Log("🔍 Calling reflectPetData after delay");
+
+        try
+        {
+            reflectPetData();
+            isInitialized = true;
+            Debug.Log("✅ PetBehaviour fully initialized");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in reflectPetData(): {ex.Message}");
+            Debug.LogError($"Stack trace: {ex.StackTrace}");
         }
     }
 
     public void reflectPetData()
     {
-        string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key, assuming only one pet
-
-        // Retrieve data from PlayerPrefs and assign it to the pet object
-        pet.id = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-        pet.student_id = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetStudentID);
-        pet.pet_name = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName);
-        pet.pet_type = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetType);
-        pet.coins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
-        pet.food_stack = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetFoodStack);
-        pet.pet_head = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHead, 0);
-        pet.pet_neck = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetNeck, 0);
-        pet.pet_eyes = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetEyes, 0);
-        pet.hunger = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger);
-        pet.playfulness = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness);
-        pet.hygiene = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene);
-        pet.sleep = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep);
-        pet.created_at = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetCreatedAt);
-        pet.updated_at = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetUpdatedAt);
-        switch (pet.pet_type)
+        try
         {
-            case "cat_1": animator.runtimeAnimatorController = controllers[0]; break;
-            case "dog_1": animator.runtimeAnimatorController = controllers[3]; break;
-            default: animator.runtimeAnimatorController = controllers[0]; break;
-        }
+            string petKey = PlayerPrefKeys.PetPrefix;
 
-        petNameTxt.text = pet.pet_name;
-        foodStack.text = pet.food_stack.ToString() + "x";
-        foreach (var coins in Coins)
-        {
-            coins.text = pet.coins.ToString();
-        }
-        int[] stats = new int[] { pet.playfulness, pet.hunger, pet.hygiene, pet.sleep };
-        HPS.UpdateButtonFill(stats);
+            // Retrieve data from PlayerPrefs
+            pet.id = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+            pet.student_id = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetStudentID);
+            pet.pet_name = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName);
+            pet.pet_type = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetType);
+            pet.coins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
+            pet.food_stack = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetFoodStack);
+            pet.pet_head = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHead, 0);
+            pet.pet_neck = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetNeck, 0);
+            pet.pet_eyes = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetEyes, 0);
+            pet.hunger = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHunger);
+            pet.playfulness = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetPlayfulness);
+            pet.hygiene = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetHygiene);
+            pet.sleep = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetSleep);
+            pet.created_at = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetCreatedAt);
+            pet.updated_at = PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetUpdatedAt);
 
-        // Set accessories based on saved data
-        isHatOn = pet.pet_head > 0;
-        isCollarOn = pet.pet_neck > 0;
-        isGlassesOn = pet.pet_eyes > 0;
-
-        if (accessoryObjects.Length >= 3)
-        {
-            accessoryObjects[0].SetActive(isHatOn); // Hat
-            accessoryObjects[1].SetActive(isCollarOn); // Collar
-            accessoryObjects[2].SetActive(isGlassesOn); // Glasses
-        }
-        
-        for (int i = 0; i < accessoryObjects.Length; i++)
-        {
-            switch (i)
+            // ✅ Safe animator controller assignment
+            if (animator != null && controllers != null && controllers.Length > 0)
             {
-                case 0: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_head-1 >= 0 ? Hats[pet.pet_head-1] : Hats[0] ; break;
-                case 1: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_eyes-5 >= 0 ? Glasses[pet.pet_eyes-5] : Glasses[0] ; break;
-                case 2: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_neck-9 >= 0 ? Collars[pet.pet_neck-9] : Collars[0]; break;
-                case 3: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_neck-9 >= 0 ? SideCollars[pet.pet_neck-9] : SideCollars[0]; break;
-                case 4: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_neck-5 >= 4 ? SideCollars[pet.pet_neck-5] : SideCollars[4]; break;
-                case 5: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_eyes-5 >= 0 ? SideGlasses[pet.pet_eyes-5] : SideGlasses[0]; break;
-                case 6: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_eyes-1 >= 4 ? SideGlasses[pet.pet_eyes-1] : SideGlasses[0]; break;
-                case 7: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_head-1 >= 0 ? Hats[pet.pet_head-1] : Hats[0] ; break;
-                case 8: accessoryObjects[i].GetComponent<SpriteRenderer>().sprite = pet.pet_head-1 >= 0 ? Hats[pet.pet_head-1] : Hats[0] ; break;
-            }   
+                switch (pet.pet_type)
+                {
+                    case "cat_1": 
+                        animator.runtimeAnimatorController = controllers[0]; 
+                        break;
+                    case "dog_1": 
+                        if (controllers.Length > 3)
+                            animator.runtimeAnimatorController = controllers[3]; 
+                        break;
+                    default: 
+                        animator.runtimeAnimatorController = controllers[0]; 
+                        break;
+                }
+            }
+
+            // ✅ Safe UI updates with null checks
+            if (petNameTxt != null)
+                petNameTxt.text = pet.pet_name;
+
+            if (foodStack != null)
+                foodStack.text = pet.food_stack.ToString() + "x";
+
+            if (Coins != null)
+            {
+                foreach (var coins in Coins)
+                {
+                    if (coins != null)
+                        coins.text = pet.coins.ToString();
+                }
+            }
+
+            // ✅ Safe HPS update with validation
+            if (HPS != null)
+            {
+                int[] stats = new int[] { pet.playfulness, pet.hunger, pet.hygiene, pet.sleep };
+                HPS.UpdateButtonFill(stats);
+            }
+            else
+            {
+                Debug.LogError("❌ HPS is null when trying to update button fills!");
+            }
+
+            // Set accessories based on saved data
+            isHatOn = pet.pet_head > 0;
+            isCollarOn = pet.pet_neck > 0;
+            isGlassesOn = pet.pet_eyes > 0;
+
+            // ✅ Safe accessory updates
+            if (accessoryObjects != null && accessoryObjects.Length >= 3)
+            {
+                if (accessoryObjects[0] != null)
+                    accessoryObjects[0].SetActive(isHatOn);
+                if (accessoryObjects[1] != null)
+                    accessoryObjects[1].SetActive(isCollarOn);
+                if (accessoryObjects[2] != null)
+                    accessoryObjects[2].SetActive(isGlassesOn);
+            }
+            
+            // ✅ Safe sprite assignments with bounds checking
+            if (accessoryObjects != null)
+            {
+                for (int i = 0; i < accessoryObjects.Length; i++)
+                {
+                    if (accessoryObjects[i] == null) continue;
+
+                    SpriteRenderer sr = accessoryObjects[i].GetComponent<SpriteRenderer>();
+                    if (sr == null) continue;
+
+                    switch (i)
+                    {
+                        case 0: 
+                            if (Hats != null && pet.pet_head - 1 >= 0 && pet.pet_head - 1 < Hats.Length)
+                                sr.sprite = Hats[pet.pet_head - 1];
+                            break;
+                        case 1: 
+                            if (Glasses != null && pet.pet_eyes - 5 >= 0 && pet.pet_eyes - 5 < Glasses.Length)
+                                sr.sprite = Glasses[pet.pet_eyes - 5];
+                            break;
+                        case 2: 
+                            if (Collars != null && pet.pet_neck - 9 >= 0 && pet.pet_neck - 9 < Collars.Length)
+                                sr.sprite = Collars[pet.pet_neck - 9];
+                            break;
+                        case 3: 
+                            if (SideCollars != null && pet.pet_neck - 9 >= 0 && pet.pet_neck - 9 < SideCollars.Length)
+                                sr.sprite = SideCollars[pet.pet_neck - 9];
+                            break;
+                        case 4: 
+                            if (SideCollars != null && pet.pet_neck - 5 >= 4 && pet.pet_neck - 5 < SideCollars.Length)
+                                sr.sprite = SideCollars[pet.pet_neck - 5];
+                            break;
+                        case 5: 
+                            if (SideGlasses != null && pet.pet_eyes - 5 >= 0 && pet.pet_eyes - 5 < SideGlasses.Length)
+                                sr.sprite = SideGlasses[pet.pet_eyes - 5];
+                            break;
+                        case 6: 
+                            if (SideGlasses != null && pet.pet_eyes - 1 >= 4 && pet.pet_eyes - 1 < SideGlasses.Length)
+                                sr.sprite = SideGlasses[pet.pet_eyes - 1];
+                            break;
+                        case 7: 
+                            if (Hats != null && pet.pet_head - 1 >= 0 && pet.pet_head - 1 < Hats.Length)
+                                sr.sprite = Hats[pet.pet_head - 1];
+                            break;
+                        case 8: 
+                            if (Hats != null && pet.pet_head - 1 >= 0 && pet.pet_head - 1 < Hats.Length)
+                                sr.sprite = Hats[pet.pet_head - 1];
+                            break;
+                    }
+                }
+            }
+
+            Debug.Log("✅ reflectPetData completed successfully");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in reflectPetData(): {ex.Message}");
+            Debug.LogError($"Stack trace: {ex.StackTrace}");
         }
     }
 
     private void SetInitialPosition()
     {
-        // Set the initial position of the pet at x = 0, y = -2.25
         transform.position = new Vector3(0f, -2.25f, 0f);
-
-        // Set the initial scale of the pet to 0.33 (idle state scale)
         transform.localScale = new Vector3(0.5f, 0.5f, 1f);
-
-        // Set initial state to idle
-        animator.SetInteger("sleepType", 0); // Idle state initially
+        
+        if (animator != null)
+            animator.SetInteger("sleepType", 0);
     }
 
-    // Update is called once per frame
     void Update()
     {
+        if (!isInitialized) return; // ✅ Don't run Update until fully initialized
+
         if (canWalk && !isSleeping)
         {
             HandleBehaviorTimers();
-            AdjustScaleBasedOnPosition(); // Adjust scale based on current position
+            AdjustScaleBasedOnPosition();
         }
     }
 
+    // ... rest of the methods remain the same ...
+    // (Keep all the other methods from your original PetBehaviour.cs)
+
     private void HandleBehaviorTimers()
     {
-        // Randomize the behavior based on the time intervals
         if (timer <= 0f)
         {
             timer = Random.Range(changeDirectionTimeMin, changeDirectionTimeMax);
 
-            // Randomly choose a behavior (walk, sleep, etc.)
-            int behaviorChoice = Random.Range(0, 100); // A value between 0 and 100
+            int behaviorChoice = Random.Range(0, 100);
 
-            if (behaviorChoice < 15) // 15% chance for sleep
+            if (behaviorChoice < 15)
             {
-                // Sleep
                 isIdle = false;
                 isMoving = false;
                 StartSleep();
             }
-            else if (behaviorChoice < 50) // 30% chance for walking
+            else if (behaviorChoice < 50)
             {
-                // Walk
                 isIdle = false;
                 isMoving = true;
                 StartWalk();
             }
-            else // 55% chance for idle
+            else
             {
-                // Idle
                 isIdle = true;
                 isMoving = false;
                 StartIdle();
@@ -221,23 +396,29 @@ public class PetBehaviour : MonoBehaviour
 
     private void StartIdle()
     {
-        sleepState = 0; // Set to idle state
-        animator.SetBool("goLeft", false);
-        animator.SetBool("goRight", false);
-        animator.SetInteger("sleepType", sleepState);
+        sleepState = 0;
+        if (animator != null)
+        {
+            animator.SetBool("goLeft", false);
+            animator.SetBool("goRight", false);
+            animator.SetInteger("sleepType", sleepState);
+        }
         isIdle = true;
 
         StartCoroutine(idleAccessories());
-
-        // Set the idle scale to 0.33 (fixed value for idle state)
         transform.localScale = new Vector3(0.5f, 0.5f, 1f);
     }
 
     private IEnumerator idleAccessories()
     {
         yield return new WaitForSeconds(.1f);
+        
+        if (accessoryObjects == null) yield break;
+
         for (int i = 0; i < accessoryObjects.Length; i++)
         {
+            if (accessoryObjects[i] == null) continue;
+
             if (i > 2)
             {
                 accessoryObjects[i].SetActive(false);
@@ -261,8 +442,13 @@ public class PetBehaviour : MonoBehaviour
     private IEnumerator walkingAccessories(bool right)
     {
         yield return new WaitForSeconds(.1f);
+        
+        if (accessoryObjects == null) yield break;
+
         for (int i = 0; i < accessoryObjects.Length; i++)
         {
+            if (accessoryObjects[i] == null) continue;
+
             accessoryObjects[i].SetActive(false);
             if (!goLeft && ((isCollarOn && i == 3) || (isGlassesOn && i == 5) || (isHatOn && i == 7)))
             {
@@ -280,33 +466,34 @@ public class PetBehaviour : MonoBehaviour
 
     private void StartWalk()
     {
-        sleepState = 0; // Set to idle state
-        animator.SetBool("goLeft", false);
-        animator.SetBool("goRight", false);
-        animator.SetInteger("sleepType", sleepState);
+        sleepState = 0;
+        if (animator != null)
+        {
+            animator.SetBool("goLeft", false);
+            animator.SetBool("goRight", false);
+            animator.SetInteger("sleepType", sleepState);
+        }
 
-        // Determine direction based on current X position compared to target position
         float targetX = Random.Range(-1.91f, 1.91f);
         if (targetX < transform.position.x)
         {
-            // Move left if the target X position is smaller than the current X position
             goLeft = true;
             goRight = false;
         }
         else
         {
-            // Move right if the target X position is larger than the current X position
             goLeft = false;
             goRight = true;
         }
 
         StartCoroutine(walkingAccessories(goRight));
 
-        // Set walking direction parameters
-        animator.SetBool("goLeft", goLeft);
-        animator.SetBool("goRight", goRight);
+        if (animator != null)
+        {
+            animator.SetBool("goLeft", goLeft);
+            animator.SetBool("goRight", goRight);
+        }
 
-        // Initiate walk behavior
         StartCoroutine(WalkToRandomPosition(goLeft));
     }
 
@@ -314,16 +501,21 @@ public class PetBehaviour : MonoBehaviour
     {
         isSleeping = true;
 
-        // Random sleep position
-        int sleepChoice = Random.Range(3, 5); // 1 - left lay sleep, 2 - right lay sleep, 3 - sit sleep left, 4 - sit sleep right
+        int sleepChoice = Random.Range(3, 5);
         sleepState = sleepChoice;
-        animator.SetInteger("sleepType", sleepState); // Update sleep state for animator
-        foreach (var accessory in accessoryObjects)
+        
+        if (animator != null)
+            animator.SetInteger("sleepType", sleepState);
+            
+        if (accessoryObjects != null)
         {
-            accessory.SetActive(false); // Hide all accessories when sleeping
+            foreach (var accessory in accessoryObjects)
+            {
+                if (accessory != null)
+                    accessory.SetActive(false);
+            }
         }
 
-        // Use layTimeMin and layTimeMax to dictate how long the pet sleeps
         float sleepDuration = Random.Range(layTimeMin, layTimeMax);
         StartCoroutine(LayForDuration(sleepDuration));
     }
@@ -331,14 +523,12 @@ public class PetBehaviour : MonoBehaviour
     private IEnumerator WalkToRandomPosition(bool isWalkingLeft)
     {
         float targetX = Random.Range(-1.91f, 1.91f);
-        float targetY = Random.Range(-2.55f, -1.88f); // Target Y range for movement
+        float targetY = Random.Range(-2.55f, -1.88f);
 
-        // Move the pet toward the target
         float elapsedTime = 0f;
         Vector3 startingPosition = transform.position;
         Vector3 targetPosition = new Vector3(targetX, targetY, 0f);
 
-        // Move pet toward target
         while (elapsedTime < 1f)
         {
             float distanceCovered = (elapsedTime / 1f) * moveSpeed;
@@ -348,67 +538,61 @@ public class PetBehaviour : MonoBehaviour
             yield return null;
         }
 
-        // Once movement ends, return to idle state
         isMoving = false;
         StartIdle();
     }
 
     private IEnumerator LayForDuration(float duration)
     {
-        // Wait for the specified sleep duration (using layTimeMin and layTimeMax)
         yield return new WaitForSeconds(duration);
 
         isSleeping = false;
-        StartIdle(); // Once sleep ends, go idle
+        StartIdle();
     }
 
     private void AdjustScaleBasedOnPosition()
     {
-        // Calculate the scale ratio based on the Y position
         float currentY = transform.position.y;
-
-        // Define a range for Y position (from -2.55 to -1.88 for backward movement)
         float normalizedY = Mathf.InverseLerp(-2.55f, -1.88f, currentY);
 
-        // Calculate the new scale based on the normalized Y value
-        float idleScale = Mathf.Lerp(0.5f, 0.15f, normalizedY); // Idle scale range from 0.33 to 0.15
-        float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY); // Movement scale range from 0.5 to 0.2
+        float idleScale = Mathf.Lerp(0.5f, 0.15f, normalizedY);
+        float movementScale = Mathf.Lerp(0.5f, 0.2f, normalizedY);
 
-        // Apply the new scale to the pet
         if (isIdle)
         {
-            transform.localScale = new Vector3(idleScale, idleScale, 1f); // Apply idle scale
+            transform.localScale = new Vector3(idleScale, idleScale, 1f);
         }
-        else if (isMoving || isSleeping) // Apply movement scale for all movement states, including sleeping
+        else if (isMoving || isSleeping)
         {
-            transform.localScale = new Vector3(movementScale, movementScale, 1f); // Apply movement scale
+            transform.localScale = new Vector3(movementScale, movementScale, 1f);
         }
     }
 
     public void DisableBehavior()
     {
-        // Disable movement
         canWalk = false;
         isMoving = false;
         isIdle = true;
 
-        // Stop all movement animations
-        animator.SetBool("goLeft", false);
-        animator.SetBool("goRight", false);
-        animator.SetInteger("sleepType", 0);
+        if (animator != null)
+        {
+            animator.SetBool("goLeft", false);
+            animator.SetBool("goRight", false);
+            animator.SetInteger("sleepType", 0);
+        }
     }
 
     public IEnumerator WalkToInitialPosition()
     {
-        // Store the initial position
-        Vector3 initialPosition = new Vector3(0f, -2.25f, 0f); // Assuming this is the initial position
+        Vector3 initialPosition = new Vector3(0f, -2.25f, 0f);
 
-        // Set walking animation
-        animator.SetBool("goLeft", initialPosition.x < transform.position.x); // Decide walking direction based on X position
-        animator.SetBool("goRight", initialPosition.x > transform.position.x); // Decide walking direction based on X position
+        if (animator != null)
+        {
+            animator.SetBool("goLeft", initialPosition.x < transform.position.x);
+            animator.SetBool("goRight", initialPosition.x > transform.position.x);
+        }
 
-        // Move the pet smoothly toward the initial position
-        float moveDuration = 2f; // Time it will take to walk back to initial position (you can adjust this value)
+        float moveDuration = 2f;
         float elapsedTime = 0f;
         Vector3 startingPosition = transform.position;
 
@@ -419,51 +603,497 @@ public class PetBehaviour : MonoBehaviour
             yield return null;
         }
 
-        // Final position snap to ensure accuracy
         transform.position = initialPosition;
-
-        // Once the pet reaches the initial position, go idle
         StartIdle();
     }
 
+    // ✅ ADD TRY-CATCH to all public methods that might be called externally
     public void OnFeedButtonPressed()
     {
-        if (foodAnimator != null)
+        try
         {
-            foodAnimator.SetTrigger("GoEat");
-            animator.SetBool("eat", true);
-            transform.localScale = new Vector3(0.7f, 0.7f, 1f); // Set scale to 0.5 when eating
-            for (int i = 0; i < accessoryObjects.Length; i++)
+            if (foodAnimator != null)
             {
-                if (i == 2)
-                {
-                    accessoryObjects[i].transform.localScale = new Vector3(accessoryObjects[i].transform.localScale.x * 0.5f, accessoryObjects[i].transform.localScale.y * 0.5f, 1f); // Enlarge glasses when eating
-                    accessoryObjects[i].transform.localPosition = new Vector3(-0.25f, 0.025f, 1f);
-                    continue;
-                }
-                accessoryObjects[i].SetActive(false); // Hide all accessories when eating
+                foodAnimator.SetTrigger("GoEat");
             }
-        }
-        SM.PlayEatingSoundForDuration(8f);
-        // Disable buttons during feeding animation
-        foreach (var button in buttonsToDisable)
-        {
-            button.SetActive(false);
-        }
+            
+            if (animator != null)
+            {
+                animator.SetBool("eat", true);
+            }
+            
+            transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+            
+            if (accessoryObjects != null)
+            {
+                for (int i = 0; i < accessoryObjects.Length; i++)
+                {
+                    if (accessoryObjects[i] == null) continue;
 
-        // Re-enable buttons after a delay (assuming feeding animation lasts 3 seconds)
-        StartCoroutine(ReenableButtonsAfterDelay(10f));
+                    if (i == 2)
+                    {
+                        accessoryObjects[i].transform.localScale = new Vector3(
+                            accessoryObjects[i].transform.localScale.x * 0.5f, 
+                            accessoryObjects[i].transform.localScale.y * 0.5f, 
+                            1f
+                        );
+                        accessoryObjects[i].transform.localPosition = new Vector3(-0.25f, 0.025f, 1f);
+                        continue;
+                    }
+                    accessoryObjects[i].SetActive(false);
+                }
+            }
+
+            if (SM != null)
+            {
+                SM.PlayEatingSoundForDuration(8f);
+            }
+
+            if (buttonsToDisable != null)
+            {
+                foreach (var button in buttonsToDisable)
+                {
+                    if (button != null)
+                        button.SetActive(false);
+                }
+            }
+
+            StartCoroutine(ReenableButtonsAfterDelay(10f));
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in OnFeedButtonPressed(): {ex.Message}");
+        }
     }
 
     private void OnFinishFeeding()
     {
-        if (foodAnimator != null)
+        try
         {
-            foodAnimator.ResetTrigger("GoEat");
-            animator.SetBool("eat", false);
-            transform.localScale = new Vector3(0.5f, 0.5f, 1f); // Reset scale to idle state
+            if (foodAnimator != null)
+            {
+                foodAnimator.ResetTrigger("GoEat");
+            }
+            
+            if (animator != null)
+            {
+                animator.SetBool("eat", false);
+            }
+            
+            transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            
+            if (accessoryObjects != null)
+            {
+                for (int i = 0; i < accessoryObjects.Length; i++)
+                {
+                    if (accessoryObjects[i] == null) continue;
+
+                    if (i > 2)
+                    {
+                        accessoryObjects[i].SetActive(false);
+                        continue;
+                    }
+                    if (isHatOn && i == 0)
+                    {
+                        accessoryObjects[i].SetActive(true);
+                    }
+                    if (isGlassesOn && i == 1)
+                    {
+                        accessoryObjects[i].SetActive(true);
+                    }
+                    if (isCollarOn && i == 2)
+                    {
+                        accessoryObjects[i].SetActive(true);
+                    }
+                }
+                
+                if (accessoryObjects.Length > 2 && accessoryObjects[2] != null)
+                {
+                    accessoryObjects[2].transform.localPosition = glassesOriginalPosition;
+                    accessoryObjects[2].transform.localScale = glassesOriginalScale;
+                }
+            }
+
+            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
+            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger) + 10;
+            if (hunger >= 100)
+            {
+                hunger = 100;
+            }
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);
+            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
+
+            if (StorageBridge.Instance != null)
+            {
+                StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger, hunger);
+            }
+
+            int[] stats = new int[] { playfulness, hunger, bath, sleep };
+        
+            if (HPS != null)
+            {
+                HPS.UpdateButtonFill(stats);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in OnFinishFeeding(): {ex.Message}");
+        }
+    }
+
+    private IEnumerator ReenableButtonsAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (buttonsToDisable != null)
+        {
+            foreach (var button in buttonsToDisable)
+            {
+                if (button != null)
+                    button.SetActive(true);
+            }
+        }
+        
+        OnFinishFeeding();
+    }
+
+    // ... Include ALL remaining methods from your original PetBehaviour.cs ...
+    // (OnCollisionEnter2D, OnCollisionExit2D, ContinuouslySpawnBubbles, etc.)
+    // I'm truncating here due to length, but add them all with try-catch blocks
+
+    public void ToggleLightEffect()
+    {
+        try
+        {
+            isLightOn = !isLightOn;
+            if (lightEffect != null)
+                lightEffect.SetActive(isLightOn);
+                
+            if (buttonsToDisable != null)
+            {
+                foreach (var button in buttonsToDisable)
+                {
+                    if (button != null)
+                        button.SetActive(!isLightOn);
+                }
+            }
+            
+            if (SM != null)
+                SM.PlayLightSound();
+                
+            if (isLightOn)
+            {
+                if (statManager != null)
+                    statManager.isSleeping = true;
+                    
+                int sleepChoice = Random.Range(1, 5);
+                sleepState = sleepChoice;
+                transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+                
+                if (animator != null)
+                    animator.SetInteger("sleepType", sleepState);
+                    
+                if (accessoryObjects != null)
+                {
+                    foreach (var accessory in accessoryObjects)
+                    {
+                        if (accessory != null)
+                            accessory.SetActive(false);
+                    }
+                }
+                
+                isSleeping = true;
+                canWalk = false;
+                
+                if (StorageBridge.Instance != null)
+                    StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
+            }
+            else
+            {
+                if (statManager != null)
+                    statManager.isSleeping = false;
+                    
+                isSleeping = false;
+                
+                if (buttonsToDisable != null)
+                {
+                    foreach (var button in buttonsToDisable)
+                    {
+                        if (button != null)
+                            button.SetActive(true);
+                    }
+                }
+                
+                if (StorageBridge.Instance != null)
+                    StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
+                    
+                StartIdle();
+            }
+            
+            if (!FTLIFS)
+            {
+                FTLIFS = true;
+            }
+            else
+            {
+                StartCoroutine(toggleSleepOnBackend(isSleeping));
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in ToggleLightEffect(): {ex.Message}");
+        }
+    }
+
+    private IEnumerator toggleSleepOnBackend(bool isSleeping)
+    {
+        // ✅ NO try-catch when using yield return
+        string petKey = PlayerPrefKeys.PetPrefix;
+        int petID = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
+
+        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
+        string url = $"{apiUrl}/toggle-pet-sleep";
+
+        SleepPayload jsonPayload = new SleepPayload
+        {
+            petId = petID,
+            isSleep = isSleeping
+        };
+
+        string jsonString = JsonUtility.ToJson(jsonPayload);
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] jsonToSend = System.Text.Encoding.UTF8.GetBytes(jsonString);
+        request.uploadHandler = new UploadHandlerRaw(jsonToSend);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        yield return request.SendWebRequest();
+
+        // Log result after yield (outside any try-catch)
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"Error toggling sleep: {request.error}");
+        }
+    }
+
+    public void FaucetFlow()
+    {
+        try
+        {
+            if (FaucerAnimator != null)
+            {
+                FaucerAnimator.SetBool("flow", true);
+            }
+            
+            if (SM != null)
+            {
+                SM.PlayFaucet();
+            }
+            
+            StartCoroutine(waitForFaucet());
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in FaucetFlow(): {ex.Message}");
+        }
+    }
+    
+    private IEnumerator waitForFaucet()
+    {
+        yield return new WaitForSeconds(12f);
+        
+        if (FaucerAnimator != null)
+        {
+            FaucerAnimator.SetBool("flow", false);
+        }
+    }
+
+    // Bath/Collision methods
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        try
+        {
+            if (collision.gameObject.CompareTag("soap"))
+            {
+                if (accessoryObjects != null)
+                {
+                    foreach (var acc in accessoryObjects) 
+                    {
+                        if (acc != null)
+                            acc.SetActive(false);
+                    }
+                }
+                
+                if (buttonsToDisable != null)
+                {
+                    foreach (var button in buttonsToDisable)
+                    {
+                        if (button != null)
+                            button.SetActive(false);
+                    }
+                }
+
+                if (!isTouching)
+                {
+                    int currentCoins = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetCoins);
+                    if (currentCoins <= 2)
+                    {
+                        if (SoapNotEnoughPanel != null)
+                            SoapNotEnoughPanel.SetActive(true);
+                            
+                        if (accessoryObjects != null)
+                        {
+                            for (int i = 0; i < accessoryObjects.Length; i++)
+                            {
+                                if (accessoryObjects[i] == null) continue;
+
+                                if (i > 2)
+                                {
+                                    accessoryObjects[i].SetActive(false);
+                                    continue;
+                                }
+                                if (isHatOn && i == 0)
+                                {
+                                    accessoryObjects[i].SetActive(true);
+                                }
+                                if (isGlassesOn && i == 1)
+                                {
+                                    accessoryObjects[i].SetActive(true);
+                                }
+                                if (isCollarOn && i == 2)
+                                {
+                                    accessoryObjects[i].SetActive(true);
+                                }
+                            }
+                        }
+
+                        if (buttonsToDisable != null)
+                        {
+                            foreach (var button in buttonsToDisable)
+                            {
+                                if (button != null)
+                                    button.SetActive(true);
+                            }
+                        }
+                        return;
+                    }
+
+                    isTouching = true;
+                    
+                    if (SoapQuantity != null)
+                        SoapQuantity.SetActive(false);
+                        
+                    StartCoroutine(ContinuouslySpawnBubbles());
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in OnCollisionEnter2D(): {ex.Message}");
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        try
+        {
+            if (collision.gameObject.CompareTag("soap"))
+            {
+                isTouching = false;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ Exception in OnCollisionExit2D(): {ex.Message}");
+        }
+    }
+
+    private IEnumerator ContinuouslySpawnBubbles()
+    {
+        // ✅ NO try-catch when using yield return - use null checks instead
+        Collider2D petCollider = GetComponent<Collider2D>();
+        if (petCollider == null)
+        {
+            Debug.LogError("❌ No collider found on pet!");
+            yield break;
+        }
+
+        Bounds colliderBounds = petCollider.bounds;
+
+        while (isTouching && bubbleCount < 10)
+        {
+            bubbleCount++;
+            
+            if (bubbleCount % 2 == 1 && SM != null)
+            {
+                SM.PlayBubble();
+            }
+
+            float randomX = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
+            float randomY = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
+            float randomX2 = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
+            float randomY2 = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
+
+            Vector2 spawnPosition = new Vector2(randomX, randomY);
+            Vector2 spawnPosition2 = new Vector2(randomX2, randomY2);
+
+            if (bubblePrefabs != null && bubblePrefabs.Length > 0)
+            {
+                GameObject bubble1 = bubblePrefabs[Random.Range(0, bubblePrefabs.Length)];
+                GameObject bubble2 = bubblePrefabs[Random.Range(0, bubblePrefabs.Length)];
+                
+                if (bubble1 != null)
+                    Instantiate(bubble1, spawnPosition, Quaternion.identity);
+                if (bubble2 != null)
+                    Instantiate(bubble2, spawnPosition2, Quaternion.identity);
+            }
+
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        if (bubbleCount >= 10 && ShowerButton != null)
+        {
+            ShowerButton.SetActive(true);
+        }
+
+        isTouching = false;
+    }
+
+    public void OpenShower()
+    {
+        StartCoroutine(ShowerRoutine());
+    }
+
+    private IEnumerator ShowerRoutine()
+    {
+        // ✅ NO try-catch when using yield return
+        if (ShowerAnimator != null)
+        {
+            ShowerAnimator.SetTrigger("ShowerOn");
+        }
+        
+        if (SM != null)
+        {
+            SM.PlayShowerSoundForDuration(8f);
+        }
+        
+        MoveAndFadeBubbles();
+    
+        yield return new WaitForSeconds(10f);
+    
+        if (ShowerAnimator != null)
+        {
+            ShowerAnimator.ResetTrigger("ShowerOn");
+        }
+        
+        yield return new WaitForSeconds(1f);
+    
+        if (accessoryObjects != null)
+        {
             for (int i = 0; i < accessoryObjects.Length; i++)
             {
+                if (accessoryObjects[i] == null) continue;
+
                 if (i > 2)
                 {
                     accessoryObjects[i].SetActive(false);
@@ -482,222 +1112,42 @@ public class PetBehaviour : MonoBehaviour
                     accessoryObjects[i].SetActive(true);
                 }
             }
-            accessoryObjects[2].transform.localPosition = glassesOriginalPosition;
-            accessoryObjects[2].transform.localScale = glassesOriginalScale;
-            int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
-            int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger) + 10;
-            if (hunger >= 100) {
-                hunger = 100;
-            }
-            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene);  // Assuming bath is stored in hygiene
-            int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
-
-            StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger, hunger);
-            // Create an array with the updated stats
-            int[] stats = new int[] { playfulness, hunger, bath, sleep };
+        }
         
-        // Call UpdateButtonFill with the stats array
-        HPS.UpdateButtonFill(stats);
-        }
-    }
-
-    private IEnumerator ReenableButtonsAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        foreach (var button in buttonsToDisable)
+        if (buttonsToDisable != null)
         {
-            button.SetActive(true);
-        }
-        OnFinishFeeding();
-    }
-
-    // Detect collision with soap object
-    // Replace your collision detection methods with these:
-
-    // Detect when soap enters collision
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("soap"))
-        {
-            foreach (var acc in accessoryObjects) 
-            {
-                acc.SetActive(false);
-            }
             foreach (var button in buttonsToDisable)
             {
-                button.SetActive(false); // Disable buttons when touching soap
-            }
-
-            if (!isTouching)
-            {
-                int currentCoins = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetCoins);
-                if (currentCoins <= 2)
-                {
-                    SoapNotEnoughPanel.SetActive(true);
-                    for (int i = 0; i < accessoryObjects.Length; i++)
-                    {
-                        if (i > 2)
-                        {
-                            accessoryObjects[i].SetActive(false);
-                            continue;
-                        }
-                        if (isHatOn && i == 0)
-                        {
-                            accessoryObjects[i].SetActive(true);
-                        }
-                        if (isGlassesOn && i == 1)
-                        {
-                            accessoryObjects[i].SetActive(true);
-                        }
-                        if (isCollarOn && i == 2)
-                        {
-                            accessoryObjects[i].SetActive(true);
-                        }
-                    }
-
-                    foreach (var button in buttonsToDisable)
-                    {
-                        button.SetActive(true);  // Enable any buttons that were disabled
-                    }
-                    return;
-                }
-
-                isTouching = true;
-                SoapQuantity.SetActive(false);
-                // Start the continuous bubble spawning coroutine
-                StartCoroutine(ContinuouslySpawnBubbles());
+                if (button != null)
+                    button.SetActive(true);
             }
         }
-    }
-
-    // Detect when soap exits collision
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("soap"))
-        {
-            isTouching = false; // Stop spawning when soap exits
-        }
-    }
-
-    // Coroutine to continuously spawn bubbles while soap is touching
-    private IEnumerator ContinuouslySpawnBubbles()
-    {
-        // Get the bounds of the pet's collider
-        Collider2D petCollider = GetComponent<Collider2D>();
-        Bounds colliderBounds = petCollider.bounds;
-
-        // Keep spawning bubbles while soap is touching and limit hasn't been reached
-        while (isTouching && bubbleCount < 10)
-        {
-            bubbleCount++; // Increment the bubble count
-            
-            if (bubbleCount % 2 == 1)
-            {
-                SM.PlayBubble(); // Plays on: 1, 3, 5, 7, 9
-            }
-
-            // Generate random positions within the collider's bounds
-            float randomX = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
-            float randomY = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
-            float randomX2 = Random.Range(colliderBounds.min.x, colliderBounds.max.x);
-            float randomY2 = Random.Range(colliderBounds.min.y, colliderBounds.max.y);
-
-            // Create spawn positions with the random offsets
-            Vector2 spawnPosition = new Vector2(randomX, randomY);
-            Vector2 spawnPosition2 = new Vector2(randomX2, randomY2);
-
-            // Instantiate the bubbles at the random positions
-            Instantiate(bubblePrefabs[Random.Range(0, bubblePrefabs.Length)], spawnPosition, Quaternion.identity);
-            Instantiate(bubblePrefabs[Random.Range(0, bubblePrefabs.Length)], spawnPosition2, Quaternion.identity);
-
-            // Wait for 0.5 seconds before spawning the next set of bubbles
-            // Adjust this delay value to control spawn speed
-            yield return new WaitForSeconds(0.2f);
-        }
-
-        // Once bubble limit is reached, show the shower button
-        if (bubbleCount >= 10)
-        {
-            ShowerButton.SetActive(true);
-        }
-
-        isTouching = false; // Reset the flag
-    }
-
-    public void OpenShower()
-    {
-        StartCoroutine(ShowerRoutine());
-    }
-
-    // Shower routine that moves bubbles down and fades them
-    private IEnumerator ShowerRoutine()
-    {
-        // Trigger the shower animation
-        ShowerAnimator.SetTrigger("ShowerOn");
-        SM.PlayShowerSoundForDuration(8f);
-        // Move and fade the bubbles during this time
-        MoveAndFadeBubbles();
-    
-        yield return new WaitForSeconds(10f);  // Shower duration
-    
-        // Reset the trigger after shower animation completes
-        ShowerAnimator.ResetTrigger("ShowerOn");
-        yield return new WaitForSeconds(1f);  // Wait for animation to finish
-    
-        // Reset and clean up accessories and buttons after the shower
-        for (int i = 0; i < accessoryObjects.Length; i++)
-        {
-            if (i > 2)
-            {
-                accessoryObjects[i].SetActive(false);
-                continue;
-            }
-            if (isHatOn && i == 0)
-            {
-                accessoryObjects[i].SetActive(true);
-            }
-            if (isGlassesOn && i == 1)
-            {
-                accessoryObjects[i].SetActive(true);
-            }
-            if (isCollarOn && i == 2)
-            {
-                accessoryObjects[i].SetActive(true);
-            }
-        }
-        foreach (var button in buttonsToDisable)
-        {
-            button.SetActive(true);  // Enable any buttons that were disabled
-        }
-        // Call the API to update soap usage on the backend
+        
         yield return StartCoroutine(UpdateSoapUsageOnBackend());
 
-        // Call the DataManager API to sync pet data after the shower routine
-        DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
-        ShowerButton.SetActive(false);
-        bubbleCount = 0;  // Reset bubble count (if needed)
+        if (DataManager.Instance != null)
+        {
+            DataManager.Instance.StartCoroutine(DataManager.Instance.HandlePetDataRequest());
+        }
+        
+        if (ShowerButton != null)
+            ShowerButton.SetActive(false);
+            
+        bubbleCount = 0;
     }
     
-    // Method to update soap usage on the backend
     private IEnumerator UpdateSoapUsageOnBackend()
     {
-        // Retrieve API URL and pet ID from PlayerPrefs
         string petKey = PlayerPrefKeys.PetPrefix;
         string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
         string apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary);
         int petId = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
 
-        // Construct the API URL for soap usage
         string url = $"{apiUrlSecondary}/pets/{petId}/soapuse";
 
-        // Create payload object (no soap_type required now)
-        var payload = new object();  // No need to send soap_type
-
-        // Convert to JSON (empty object since no soap_type is needed)
+        var payload = new object();
         string jsonData = JsonUtility.ToJson(payload);
 
-        // Create a UnityWebRequest to make a PUT request
         UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPUT)
         {
             uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData)),
@@ -705,71 +1155,83 @@ public class PetBehaviour : MonoBehaviour
         };
         request.SetRequestHeader("Content-Type", "application/json");
 
-        // Send the request and wait for the response
         yield return request.SendWebRequest();
 
-        // Handle the response
         if (request.result == UnityWebRequest.Result.Success)
         {
-            // Update soap quantity in PlayerPrefs
             int currentCoins = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins);
-            StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, currentCoins - 3);
-
-            foreach (var coin in Coins)
+            
+            if (StorageBridge.Instance != null)
             {
-                coin.text = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins).ToString();
+                StorageBridge.Instance.SaveValue(petKey + PlayerPrefKeys.PetCoins, currentCoins - 3);
             }
-            // Retrieve and update stats
+
+            if (Coins != null)
+            {
+                foreach (var coin in Coins)
+                {
+                    if (coin != null)
+                        coin.text = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetCoins).ToString();
+                }
+            }
+
             int playfulness = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetPlayfulness);
             int hunger = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHunger);
-            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) + 10;  // Assuming bath is stored in hygiene
+            int bath = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene) + 10;
             int sleep = PlayerPrefs.GetInt(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetSleep);
-            StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
-            // Create an array with the updated stats
+            
+            if (StorageBridge.Instance != null)
+            {
+                StorageBridge.Instance.SaveValue(PlayerPrefKeys.PetPrefix + PlayerPrefKeys.PetHygiene, bath);
+            }
+            
             int[] stats = new int[] { playfulness, hunger, bath, sleep };
 
-            // Call UpdateButtonFill with the stats array
-            HPS.UpdateButtonFill(stats);
+            if (HPS != null)
+            {
+                HPS.UpdateButtonFill(stats);
+            }
         }
         else
         {
             Debug.LogError("Error updating soap usage on backend: " + request.error);
         }
-        SoapQuantity.SetActive(true);
+        
+        if (SoapQuantity != null)
+            SoapQuantity.SetActive(true);
     }
  
-    // Function to move and fade the bubbles
     private void MoveAndFadeBubbles()
     {
         GameObject[] existingBubbles = GameObject.FindGameObjectsWithTag("Bubbles");
 
         foreach (var bubble in existingBubbles)
         {
-            StartCoroutine(MoveAndFadeBubble(bubble));  // Start moving and fading each bubble
+            if (bubble != null)
+                StartCoroutine(MoveAndFadeBubble(bubble));
         }
     }
 
-    // Move and fade bubble to y = -3.5, then destroy after fade
     private IEnumerator MoveAndFadeBubble(GameObject bubble)
     {
-        SpriteRenderer bubbleRenderer = bubble.GetComponent<SpriteRenderer>();  // Get the bubble's sprite renderer
+        if (bubble == null) yield break;
+
+        SpriteRenderer bubbleRenderer = bubble.GetComponent<SpriteRenderer>();
+        if (bubbleRenderer == null) yield break;
 
         Vector3 startPosition = bubble.transform.position;
         Vector3 targetPosition = new Vector3(bubble.transform.position.x, -3.5f, bubble.transform.position.z);
 
-        float moveDuration = bubbleFlowDuration;  // Duration for downward movement
-        float fadeDuration = bubbleFadeDuration;  // Duration for fading
+        float moveDuration = bubbleFlowDuration;
+        float fadeDuration = bubbleFadeDuration;
 
         float moveElapsedTime = 0f;
-        float fadeElapsedTime = 0f;  // Track fade time separately
+        float fadeElapsedTime = 0f;
 
-        // Move and fade the bubble simultaneously
-        while (moveElapsedTime < moveDuration)
+        while (moveElapsedTime < moveDuration && bubble != null)
         {
-            // Move the bubble downwards to the target position
             bubble.transform.position = Vector3.Lerp(startPosition, targetPosition, moveElapsedTime / moveDuration);
 
-            // Fade the bubble based on elapsed time
             float fadeProgress = fadeElapsedTime / fadeDuration;
             bubbleRenderer.color = new Color(bubbleRenderer.color.r, bubbleRenderer.color.g, bubbleRenderer.color.b, Mathf.Lerp(1f, 0f, fadeProgress));
 
@@ -779,101 +1241,15 @@ public class PetBehaviour : MonoBehaviour
             yield return null;
         }
 
-        // After the move is complete, ensure the final position and fully transparent
-        bubble.transform.position = targetPosition;
-        bubbleRenderer.color = new Color(bubbleRenderer.color.r, bubbleRenderer.color.g, bubbleRenderer.color.b, 0f);
-
-        // Destroy the bubble after fading
-        Destroy(bubble);
-    }
-
-    public void ToggleLightEffect()
-    {
-        isLightOn = !isLightOn;
-        lightEffect.SetActive(isLightOn);
-        foreach (var button in buttonsToDisable)
+        if (bubble != null)
         {
-            button.SetActive(!isLightOn);
+            bubble.transform.position = targetPosition;
+            bubbleRenderer.color = new Color(bubbleRenderer.color.r, bubbleRenderer.color.g, bubbleRenderer.color.b, 0f);
+            Destroy(bubble);
         }
-        SM.PlayLightSound();
-        if (isLightOn)
-        {
-            statManager.isSleeping = true;
-            int sleepChoice = Random.Range(1, 5); // 3 - sit sleep left, 4 - sit sleep right
-            sleepState = sleepChoice;
-            transform.localScale = new Vector3(0.5f, 0.5f, 1f); // Set scale to 0.5 when sleeping
-            animator.SetInteger("sleepType", sleepState); // Update sleep state for animator
-            foreach (var accessory in accessoryObjects)
-            {
-                accessory.SetActive(false); // Hide all accessories when sleeping
-            }
-            isSleeping = true;
-            canWalk = false;
-            StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
-            
-        }
-        else
-        {
-            statManager.isSleeping = false;
-            isSleeping = false;
-            foreach (var button in buttonsToDisable)
-            {
-                button.SetActive(true);
-            }
-            StorageBridge.Instance.SaveValue(PlayerPrefKeys.isSleeping, isSleeping ? 1 : 0);
-            StartIdle();
-        }
-        if (!FTLIFS)
-        {
-            FTLIFS = true;
-        } else
-        {
-            StartCoroutine(toggleSleepOnBackend(isSleeping));
-        }
-    }
-
-    private IEnumerator toggleSleepOnBackend(bool isSleeping)
-    {
-        // Get the pet ID from PlayerPrefs or another source
-        string petKey = PlayerPrefKeys.PetPrefix;
-        int petID = PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID);
-
-        // Construct the URL to your backend API (Make sure the URL is correct)
-        string apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL);
-        string url = $"{apiUrl}/toggle-pet-sleep";  // Change this to your actual API endpoint
-
-        // Create the JSON payload
-        SleepPayload jsonPayload = new SleepPayload
-        {
-            petId = petID,
-            isSleep = isSleeping  // Send the sleep state
-        };
-
-        // Convert the payload to JSON string
-        string jsonString = JsonUtility.ToJson(jsonPayload);
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        byte[] jsonToSend = System.Text.Encoding.UTF8.GetBytes(jsonString);
-        request.uploadHandler = new UploadHandlerRaw(jsonToSend);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-
-        // Send the request and wait for the response
-        yield return request.SendWebRequest();
-    }
-
-    public void FaucetFlow()
-    {
-        FaucerAnimator.SetBool("flow", true);
-        SM.PlayFaucet();
-        StartCoroutine(waitForFaucet());
-    }
-    
-    private IEnumerator waitForFaucet()
-    {
-        yield return new WaitForSeconds(12f);
-        FaucerAnimator.SetBool("flow", false);
     }
 }
+
 [System.Serializable]
 public class SleepPayload
 {

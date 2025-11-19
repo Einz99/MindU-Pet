@@ -12,15 +12,15 @@ public class DataManager : MonoBehaviour
     // Singleton instance
     public static DataManager Instance { get; private set; }
 
-    public int studentId;
-    public string apiUrl; // Primary API URL
-    public string apiUrlSecondary; // Secondary API URL (appended with "/api")
+    private int studentId;
+    private string apiUrl; // Primary API URL
+    private string apiUrlSecondary; // Secondary API URL (appended with "/api")
 
     // Loading Screen UI (you can assign this in the Unity Inspector)
     public GameObject loadingScreen;
     public GameObject VideoOrSkipScreen;
     public GameObject CreationScreen;
-    public float loadingScreenDuration = 5f;  // Set the duration of loading screen (5-10 seconds)
+    public float loadingScreenDuration = 10f;  // Set the duration of loading screen (5-10 seconds)
     
     private bool isWebGL = false;
 
@@ -58,7 +58,6 @@ public class DataManager : MonoBehaviour
     {
         if (studentId > 0 && !string.IsNullOrEmpty(apiUrlSecondary))
         {
-            
             // Load saved data from AsyncStorage if in WebGL
             if (isWebGL && StorageBridge.Instance != null)
             {
@@ -68,8 +67,13 @@ public class DataManager : MonoBehaviour
             }
             else
             {
+                // Start coroutine regardless of platform if StorageBridge is not available
                 StartCoroutine(HandlePetDataRequest());
             }
+        }
+        else
+        {
+            Debug.LogError("❌ Cannot start data fetch - missing studentId or apiUrlSecondary");
         }
     }
     
@@ -86,14 +90,16 @@ public class DataManager : MonoBehaviour
     private void LoadData()
     {
         // Retrieve student_id and apiUrl from PlayerPrefs, with default values if not found
-        studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 46);
-        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "http://192.168.1.2:3000");  // Fallback URL if not found
+        studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 98);
+        apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "https://www.mind-u.space");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
     }
 
     // Coroutine to get pet data and handle the loading screen and scene transitions
     public IEnumerator HandlePetDataRequest()
     {
+        Debug.Log("🚀 HandlePetDataRequest started!"); // ADD THIS
+        
         if(loadingScreen != null || CreationScreen != null)
         {
             // Show loading screen
@@ -263,24 +269,29 @@ public class DataManager : MonoBehaviour
     {
         // Trim all whitespace
         apiUrl = apiUrl.Trim();
-        
+
         this.studentId = studentId;
         this.apiUrl = apiUrl;
-    
+
+        Debug.Log($"🔧 SetData called - Student ID: {studentId}, API: {apiUrl}"); // ADD THIS
+
         // Save to PlayerPrefs
         PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, studentId);
         PlayerPrefs.SetString(PlayerPrefKeys.API_URL, apiUrl);
-        
+
         string secondaryAPI = apiUrl;
         if (!secondaryAPI.EndsWith("/"))
         {
             secondaryAPI += "/";
         }
-        
-        this.apiUrlSecondary = secondaryAPI + "api"; // Update instance variable
+
+        this.apiUrlSecondary = secondaryAPI + "api";
         PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, this.apiUrlSecondary);
         PlayerPrefs.Save();
-        
+
+        Debug.Log($"🔧 Secondary API URL: {this.apiUrlSecondary}"); // ADD THIS
+        Debug.Log($"🔧 Calling StartDataFetch()"); // ADD THIS
+
         // NOW trigger the data fetch
         StartDataFetch();
     }

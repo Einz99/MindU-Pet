@@ -9,15 +9,12 @@ using UnityEngine;
 public class UnityDataReceiver : MonoBehaviour
 {
     [Header("Fallback Configuration")]
-    [SerializeField] private float timeout = 5f; // Wait 5 seconds for React Native data
-    [SerializeField] private int fallbackStudentId = 622;
-    [SerializeField] private int port = 3000;
+    private float timeout = 10f; // Wait 5 seconds for React Native data
+    private int fallbackStudentId = 98;
     
     [Header("PC Server IP (for Android builds)")]
     [SerializeField] 
-    private string pcServerIP = "10.186.218.142"; // Set your PC's IP here
-    private string pcServerIP2 = "192.168.1.2";
-    
+    private string pcServerIP = "https://www.mind-u.space"; // Set your PC's IP here
     private bool dataReceived = false;
     private string fallbackData;
     
@@ -44,7 +41,7 @@ public class UnityDataReceiver : MonoBehaviour
         {
             // Original code for Android/PC builds
             string serverIP = GetServerIP();
-            fallbackData = $"{fallbackStudentId},http://{serverIP}:{port}";
+            fallbackData = $"{fallbackStudentId},https://www.mind-u.space";
             Debug.Log($"🌐 Fallback data generated: {fallbackData}");
             
             // Wait for DataManager to be ready, then handle data
@@ -156,7 +153,7 @@ public class UnityDataReceiver : MonoBehaviour
         
         // Try to get student ID and API URL from URL
         int studentId = fallbackStudentId;
-        string apiUrl = $"http://localhost:{port}"; // Default fallback
+        string apiUrl = $"https://www.mind-u.space"; // Default fallback
         
         #if UNITY_WEBGL && !UNITY_EDITOR
         try
