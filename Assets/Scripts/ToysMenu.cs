@@ -26,6 +26,7 @@ public class ToysMenu : MonoBehaviour
     public SoundManager SM;
 
     private bool[] toggleStatus = new bool[6];
+    private bool isUpdatingToggle = false;  // Guard flag to prevent recursion
     
     private List<string> toys = new List<string>();
 
@@ -44,7 +45,7 @@ public class ToysMenu : MonoBehaviour
             // Only set the toggle if it's active (meaning the toy is owned)
             if (Toggles[i].activeInHierarchy)
             {
-                Toggles[i].GetComponent<Toggle>().isOn = toggleStatus[i];
+                Toggles[i].GetComponent<Toggle>().SetIsOnWithoutNotify(toggleStatus[i]);  // Fixed: prevents callback trigger
             }
         }
 
@@ -101,20 +102,20 @@ public class ToysMenu : MonoBehaviour
                 if (i != 0)
                 {
                     i--;
-                    PriceTag[i].SetActive(false); // Show the price tag if the toy is available
+                    PriceTag[i].SetActive(false); // Hide the price tag if the toy is available
                     i++;
                 }
 
                 // Optionally, check if the toggle is turned on from PlayerPrefs and set the toggle state
                 bool isToggleOn = PlayerPrefs.GetInt(PlayerPrefKeys.toyPrefix + i, 0) == 1;
-                Toggles[i].GetComponent<Toggle>().isOn = isToggleOn;
+                Toggles[i].GetComponent<Toggle>().SetIsOnWithoutNotify(isToggleOn);  // Fixed: prevents callback trigger
             }
             else
             {
                 Toggles[i].SetActive(false); // Hide the toggle if the toy doesn't exist
                 if (i < 5)
                 {
-                    PriceTag[i].SetActive(true); // Hide the price tag if the toy doesn't exist 
+                    PriceTag[i].SetActive(true); // Show the price tag if the toy doesn't exist 
                 }
             }
         }
@@ -221,6 +222,11 @@ public class ToysMenu : MonoBehaviour
     
     public void TogglingToys(int index)
     {
+        // Prevent recursion
+        if (isUpdatingToggle) return;
+        
+        isUpdatingToggle = true;
+        
         // Get current toggle state
         bool currentStatus = toggleStatus[index];
 
@@ -231,14 +237,19 @@ public class ToysMenu : MonoBehaviour
         toggleStatus[index] = newStatus;
         PlayerPrefs.SetInt(PlayerPrefKeys.toyPrefix + index, newStatus ? 1 : 0);
 
-        // Update the UI
-        Toggles[index].GetComponent<Toggle>().isOn = newStatus;
+        // Update the UI WITHOUT triggering the onValueChanged callback
+        Toggle toggle = Toggles[index].GetComponent<Toggle>();
+        toggle.SetIsOnWithoutNotify(newStatus);  // Fixed: prevents infinite recursion
+        
         Toys[index].SetActive(newStatus);
 
         // Save changes
         PlayerPrefs.Save();
+        
+        isUpdatingToggle = false;
     }
 }
+
 // Response structure for the toy purchase response
 [System.Serializable]
 public class Toy

@@ -30,7 +30,7 @@ public class MiniGame : MonoBehaviour
     public GameObject ResultPanel;
     public TextMeshProUGUI ResultTitleText; // or use "public Text ResultTitleText;" for legacy UI
     public TextMeshProUGUI ResultMessageText; // or use "public Text ResultMessageText;" for legacy UI
-
+    Color titleColor = Color.white;
     private Vector3 successPositionLeft = new Vector3(-2.1f, 3.5f, 0);
     private Vector3 goodCatchPositionLeft = new Vector3(-3.5f, 3.5f, 0);
     private Vector3 badCatchPositionLeft = new Vector3(-4f, 6f, 0);
@@ -294,19 +294,23 @@ public class MiniGame : MonoBehaviour
             case "perfect":
                 resultTitle = "You threw the ball!";
                 resultMessage = "Perfect! Amazing throw!";
+                ColorUtility.TryParseHtmlString("#10b981", out titleColor); // Green
                 break;
             case "good":
                 resultTitle = "You threw the ball!";
                 resultMessage = "Good! Nice try!";
+                ColorUtility.TryParseHtmlString("#ffcc00", out titleColor);
                 break;
             case "miss":
                 resultTitle = "You missed the throw!";
                 resultMessage = "Aww. Better luck next time!";
+                ColorUtility.TryParseHtmlString("#b91c1c", out titleColor);
                 break;
         }
 
         if (ResultTitleText != null)
             ResultTitleText.text = resultTitle;
+            ResultMessageText.color = titleColor;
         if (ResultMessageText != null)
             ResultMessageText.text = resultMessage;
 

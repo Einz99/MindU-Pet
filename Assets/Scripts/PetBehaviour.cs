@@ -104,15 +104,6 @@ public class PetBehaviour : MonoBehaviour
                 glassesOriginalScale = accessoryObjects[2].transform.localScale;
             }
 
-            if (PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping, 0) == 1)
-            {
-                ToggleLightEffect();
-            } 
-            else
-            {
-                FTLIFS = true;
-            }
-
             // ✅ Wait for HPS to be ready before calling reflectPetData
             StartCoroutine(DelayedReflectPetData());
 
@@ -276,7 +267,7 @@ public class PetBehaviour : MonoBehaviour
                 if (accessoryObjects[2] != null)
                     accessoryObjects[2].SetActive(isGlassesOn);
             }
-            
+
             // ✅ Safe sprite assignments with bounds checking
             if (accessoryObjects != null)
             {
@@ -327,6 +318,66 @@ public class PetBehaviour : MonoBehaviour
                             break;
                     }
                 }
+            }
+
+            // ✅ NEW: Restore sleep state after all data is loaded
+            int savedSleepState = PlayerPrefs.GetInt(PlayerPrefKeys.isSleeping, 0);
+            Debug.Log($"🛏️ Restored sleep state: {savedSleepState}");
+
+            if (savedSleepState == 1)
+            {
+                // Pet was sleeping when game was closed - restore sleep state
+                Debug.Log("🛏️ Pet was sleeping - restoring sleep state");
+
+                // Turn on the light effect
+                if (lightEffect != null)
+                    lightEffect.SetActive(true);
+                isLightOn = true;
+
+                // Set pet to sleeping state
+                isSleeping = true;
+                canWalk = false;
+
+                // Set random sleep animation
+                int sleepChoice = Random.Range(1, 5);
+                sleepState = sleepChoice;
+                transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+
+                if (animator != null)
+                    animator.SetInteger("sleepType", sleepState);
+
+                // Hide all accessories during sleep
+                if (accessoryObjects != null)
+                {
+                    foreach (var accessory in accessoryObjects)
+                    {
+                        if (accessory != null)
+                            accessory.SetActive(false);
+                    }
+                }
+
+                // Disable buttons
+                if (buttonsToDisable != null)
+                {
+                    foreach (var button in buttonsToDisable)
+                    {
+                        if (button != null)
+                            button.SetActive(false);
+                    }
+                }
+
+                // Enable stat manager sleeping mode
+                if (statManager != null)
+                    statManager.isSleeping = true;
+
+                // Mark FTLIFS as true so ToggleLightEffect won't trigger backend call
+                FTLIFS = true;
+            }
+            else
+            {
+                Debug.Log("✅ Pet was awake - normal initialization");
+                // Pet was awake - ensure proper idle state
+                FTLIFS = true;
             }
 
             Debug.Log("✅ reflectPetData completed successfully");

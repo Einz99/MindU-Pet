@@ -8,7 +8,6 @@ public class shopMenu : MonoBehaviour
     public GameObject firstMenu;
     public GameObject FoodMenu;
     public GameObject ToyMenu;
-    public GameObject BathMenu;
     public GameObject AccessoryMenu;
     public GameObject CollarsMenu;
     public GameObject HatsMenu;
@@ -40,20 +39,6 @@ public class shopMenu : MonoBehaviour
     private void ToyMenuClose()
     {
         ToyMenu.SetActive(false);
-        firstMenu.SetActive(true);
-        shopTitle.text = "PET SHOP";
-    }
-
-    private void BathMenuOpen()
-    {
-        BathMenu.SetActive(true);
-        firstMenu.SetActive(false);
-        shopTitle.text = "BATH";
-    }
-
-    private void BathMenuClose()
-    {
-        BathMenu.SetActive(false);
         firstMenu.SetActive(true);
         shopTitle.text = "PET SHOP";
     }
@@ -127,7 +112,6 @@ public class shopMenu : MonoBehaviour
                 break;
 
             case 3:
-                BathMenuOpen();
                 break;
 
             case 4:
@@ -168,7 +152,6 @@ public class shopMenu : MonoBehaviour
                 break;
             case 3:
                 currentMenuIndex = 0; // Reset to no menu open
-                BathMenuClose();
                 break;
             case 4:
                 currentMenuIndex = 0; // Reset to no menu open

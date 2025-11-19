@@ -132,17 +132,22 @@ public class SlideUpOverlay : MonoBehaviour
             case 5: petType = "dog_2"; break;
             case 6: petType = "dog_3"; break;
         }
+        
         loadingScreen.SetActive(true);
         CreationScreen.SetActive(false);
         overlayPanel.SetActive(false);
         confirmPanel.SetActive(false);
 
         // Start the coroutine to send the pet data to the server
-        StartCoroutine(SendPetDataToServer(PetName.text, petType, studentId));
+        // FIXED: Now we wait for the pet creation to complete before fetching
+        StartCoroutine(SendPetDataToServerAndFetch(PetName.text, petType, studentId));
     }
 
-    private IEnumerator SendPetDataToServer(string petName, string petType, int studentId)
+    // FIXED: Combined coroutine that waits for pet creation before fetching
+    private IEnumerator SendPetDataToServerAndFetch(string petName, string petType, int studentId)
     {
+        Debug.Log($"🐾 Creating pet: {petName} ({petType}) for student {studentId}");
+        
         // Create the data object to send
         PetData petData = new PetData
         {
@@ -152,6 +157,7 @@ public class SlideUpOverlay : MonoBehaviour
         };
 
         string insertAPI = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary) + "/pets";
+        
         // Convert the data to JSON
         string jsonData = JsonUtility.ToJson(petData);
         UnityWebRequest request = new UnityWebRequest(insertAPI, "POST");
@@ -160,7 +166,40 @@ public class SlideUpOverlay : MonoBehaviour
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
 
+        // WAIT for the pet creation to complete
         yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("✅ Pet created successfully!");
+            Debug.Log($"Response: {request.downloadHandler.text}");
+            
+            // Add a small delay to ensure database is updated
+            yield return new WaitForSeconds(1f);
+            
+            // NOW fetch the pet data
+            if (DataManager.Instance != null)
+            {
+                Debug.Log("🔄 Fetching pet data...");
+                yield return StartCoroutine(DataManager.Instance.HandlePetDataRequest());
+            }
+            else
+            {
+                Debug.LogError("❌ DataManager instance not found!");
+            }
+        }
+        else
+        {
+            Debug.LogError($"❌ Error creating pet: {request.error}");
+            Debug.LogError($"Response Code: {request.responseCode}");
+            Debug.LogError($"Response: {request.downloadHandler.text}");
+            
+            // Show error to user
+            loadingScreen.SetActive(false);
+            CreationScreen.SetActive(true);
+        }
+
+        request.Dispose();
     }
 
     // Method to cancel the overlay and clear input

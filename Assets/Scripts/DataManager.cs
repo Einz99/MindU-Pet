@@ -93,12 +93,15 @@ public class DataManager : MonoBehaviour
         studentId = PlayerPrefs.GetInt(PlayerPrefKeys.StudentID, 98);
         apiUrl = PlayerPrefs.GetString(PlayerPrefKeys.API_URL, "https://www.mind-u.space");  // Fallback URL if not found
         apiUrlSecondary = PlayerPrefs.GetString(PlayerPrefKeys.API_URL_Secondary, apiUrl + "/api");  // Fallback secondary API URL
+        
+        Debug.Log($"📥 Loaded data - Student ID: {studentId}, API: {apiUrl}");
     }
 
     // Coroutine to get pet data and handle the loading screen and scene transitions
     public IEnumerator HandlePetDataRequest()
     {
-        Debug.Log("🚀 HandlePetDataRequest started!"); // ADD THIS
+        Debug.Log("🚀 HandlePetDataRequest started!"); 
+        Debug.Log($"Using Student ID: {studentId}, API: {apiUrlSecondary}");
         
         if(loadingScreen != null || CreationScreen != null)
         {
@@ -108,6 +111,7 @@ public class DataManager : MonoBehaviour
         }
         
         string petsEndpoint = apiUrlSecondary + "/pets/" + studentId;
+        Debug.Log($"🌐 Fetching from: {petsEndpoint}");
         
         // Wait for the specified loading screen duration (5-10 seconds)
         yield return new WaitForSeconds(loadingScreenDuration);
@@ -120,11 +124,13 @@ public class DataManager : MonoBehaviour
         
         yield return request.SendWebRequest(); // Wait for the request to finish
         
+        Debug.Log($"📡 Response Code: {request.responseCode}");
         
         if (request.result == UnityWebRequest.Result.Success)
         {
             // Parse the JSON response
             string responseText = request.downloadHandler.text;
+            Debug.Log($"✅ Response: {responseText}");
 
             try
             {
@@ -133,6 +139,7 @@ public class DataManager : MonoBehaviour
                 // Check if the response was successfully parsed
                 if (petsWrapper == null)
                 {
+                    Debug.LogError("❌ Failed to parse pet data");
                     request.certificateHandler.Dispose();
                     request.Dispose();
                     yield break;
@@ -142,6 +149,7 @@ public class DataManager : MonoBehaviour
                 {
                     if (loadingScreen != null || CreationScreen != null)
                     {
+                        Debug.Log("🐾 No pet found - showing creation screen");
                         // No pets found, show the Pet Creation Screen
                         loadingScreen.SetActive(false);
                         CreationScreen.SetActive(true);
@@ -149,36 +157,29 @@ public class DataManager : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("✅ Pet found - loading pet scene");
                     // Pet data found, save it to PlayerPrefs and go to the pet scene
                     SavePetData(petsWrapper.pet);
-
 
                     if (loadingScreen != null)
                     {
                         ShowPetScene();
-                        // bool IsWatchTutorial = PlayerPrefs.GetInt(PlayerPrefKeys.IsWatchTutorial, 0) == 1;
-                        // if (!IsWatchTutorial)
-                        // {
-                        //     VideoOrSkipScreen.SetActive(true);
-                        //     loadingScreen.SetActive(false);
-                        // } else {
-                        //     Debug.Log("Returning user - going to Pet Scene");
-                        //     ShowPetScene();
-                        // }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                
+                Debug.LogError($"❌ Exception parsing pet data: {e.Message}");
             }
         }
         else
         {
+            Debug.LogError($"❌ Request failed: {request.error}");
             
             // If the status is 404, handle it here
             if (request.responseCode == 404)
             {
+                Debug.Log("🐾 404 - No pet found, showing creation screen");
                 if (loadingScreen != null || CreationScreen != null)
                 {
                     // Show the Pet Creation Screen
@@ -229,6 +230,8 @@ public class DataManager : MonoBehaviour
     // Save pet data to PlayerPrefs
     private void SavePetData(Pet pets)
     {
+        Debug.Log($"💾 Saving pet data: {pets.pet_name} (ID: {pets.id})");
+        
         string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetID, pets.id);
         PlayerPrefs.SetInt(petKey + PlayerPrefKeys.PetStudentID, pets.student_id);
@@ -262,6 +265,8 @@ public class DataManager : MonoBehaviour
         {
             StorageBridge.Instance.SaveAllData();
         }
+        
+        Debug.Log("✅ Pet data saved successfully");
     }
 
     // Method to set the data in PlayerPrefs
@@ -273,7 +278,7 @@ public class DataManager : MonoBehaviour
         this.studentId = studentId;
         this.apiUrl = apiUrl;
 
-        Debug.Log($"🔧 SetData called - Student ID: {studentId}, API: {apiUrl}"); // ADD THIS
+        Debug.Log($"🔧 SetData called - Student ID: {studentId}, API: {apiUrl}");
 
         // Save to PlayerPrefs
         PlayerPrefs.SetInt(PlayerPrefKeys.StudentID, studentId);
@@ -289,8 +294,8 @@ public class DataManager : MonoBehaviour
         PlayerPrefs.SetString(PlayerPrefKeys.API_URL_Secondary, this.apiUrlSecondary);
         PlayerPrefs.Save();
 
-        Debug.Log($"🔧 Secondary API URL: {this.apiUrlSecondary}"); // ADD THIS
-        Debug.Log($"🔧 Calling StartDataFetch()"); // ADD THIS
+        Debug.Log($"🔧 Secondary API URL: {this.apiUrlSecondary}");
+        Debug.Log($"🔧 Calling StartDataFetch()");
 
         // NOW trigger the data fetch
         StartDataFetch();
@@ -298,14 +303,18 @@ public class DataManager : MonoBehaviour
 
     public void SkipToPetScene()
     {
-        string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
+        string petKey = PlayerPrefKeys.PetPrefix;
         bool hasPetData = PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetID) && 
                       PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID) > 0 &&
                       PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetName) &&
                       !string.IsNullOrEmpty(PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName));
 
+        Debug.Log($"SkipToPetScene - Has pet data: {hasPetData}");
+
         if (!hasPetData) { 
-            slideUpOverlay.CreatePetAndSendData();
+            // Don't call CreatePetAndSendData directly - let the user choose
+            Debug.Log("No pet data found - user needs to create a pet");
+            // The SlideUpOverlay.CreatePetAndSendData() will handle the fetch
         } else {
             ShowPetScene();
         }
@@ -314,14 +323,18 @@ public class DataManager : MonoBehaviour
     public void WatchedTutorial() {
         StorageBridge.Instance.SaveValue(PlayerPrefKeys.IsWatchTutorial, 1);
 
-        string petKey = PlayerPrefKeys.PetPrefix; // Unique pet key (e.g., "Pet_0", "Pet_1")
+        string petKey = PlayerPrefKeys.PetPrefix;
         bool hasPetData = PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetID) && 
                       PlayerPrefs.GetInt(petKey + PlayerPrefKeys.PetID) > 0 &&
                       PlayerPrefs.HasKey(petKey + PlayerPrefKeys.PetName) &&
                       !string.IsNullOrEmpty(PlayerPrefs.GetString(petKey + PlayerPrefKeys.PetName));
 
+        Debug.Log($"WatchedTutorial - Has pet data: {hasPetData}");
+
         if (!hasPetData) { 
-            slideUpOverlay.CreatePetAndSendData();
+            // Don't call CreatePetAndSendData directly - let the user choose
+            Debug.Log("No pet data found - user needs to create a pet");
+            // The SlideUpOverlay.CreatePetAndSendData() will handle the fetch
         } else {
             ShowPetScene();
         }

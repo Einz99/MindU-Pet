@@ -202,9 +202,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2125771937}
-        m_TargetAssemblyTypeName: DataManager, Assembly-CSharp
-        m_MethodName: SkipToPetScene
+      - m_Target: {fileID: 1271956075}
+        m_TargetAssemblyTypeName: SlideUpOverlay, Assembly-CSharp
+        m_MethodName: CreatePetAndSendData
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
